@@ -15,10 +15,20 @@ class EventDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //      Event Image
+            // Event Image
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
+              child: event.image.startsWith("http")
+                  ? Image.network(
+                event.image,
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(child: Text("Image not available"));
+                },
+              )
+                  : Image.asset(
                 event.image,
                 height: 200,
                 width: double.infinity,
@@ -30,21 +40,42 @@ class EventDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            //      Event Title
+            // Event Title
             Text(
               event.title,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
 
-            //      Available Seats
+            // Event Description
+            Text(
+              event.description ?? "No description available",
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 10),
+
+            // Venue
+            Text(
+              "📍 Venue: ${event.venue ?? "To be announced"}",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+
+            // Time
+            Text(
+              "⏰ Time: ${event.time ?? "To be announced"}",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+
+            // Available Seats
             Text(
               "Available Seats: ${event.availableSeats}",
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 20),
 
-            //      Buy Seat Button
+            // Buy Seat Button
             Center(
               child: ElevatedButton(
                 onPressed: () {
