@@ -1,7 +1,10 @@
+
 import 'package:flutter/material.dart';
 import '../models/events.dart'; // Import Event model
 import '../pages/eventDetailPage.dart';
 import 'seatSelection.dart';
+import 'waitlistScreen.dart'; // Import Waitlist Screen
+import 'CheckInSelectionScreen.dart';
 
 class BookingMainScreen extends StatelessWidget {
   const BookingMainScreen({super.key});
@@ -87,6 +90,19 @@ class BookingMainScreen extends StatelessWidget {
                                 );
                               },
                               child: const Text("Book Now"),
+                            )
+                          else
+                            ElevatedButton(
+                              onPressed: () {
+                                // Navigate to Waitlist Screen
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => WaitlistScreen(),
+                                  ),
+                                );
+                              },
+                              child: const Text("Join Waitlist"),
                             ),
                         ],
                       ),
@@ -140,6 +156,19 @@ class BookingMainScreen extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               // TODO: Navigate to Settings Page
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.list_alt),
+            title: const Text("Ticket"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CheckInSelectionScreen(),
+                ),
+              );
             },
           ),
           const Divider(),

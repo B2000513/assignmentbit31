@@ -53,4 +53,15 @@ List<Event> eventList = [
         isOccupied: (row == 2 && col == 1) || (row == 3 && col == 0) || (row == 4 && col == 2)
     ))),
   ),
+
+  Event(
+    title: "Music Fest 2025",
+    image: "https://via.placeholder.com/400",
+    seats: List.generate(6, (row) => List.generate(3, (col) => Seat(
+row: row,
+col: col,
+isOccupied: true, // Sold out - triggers "Join Waitlist"
+  ))),
+  ),
+
 ];
