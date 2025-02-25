@@ -3,7 +3,6 @@ import 'package:assignmentbit31/models/events.dart';
 import 'paymentScreen.dart';
 import '../models/seats.dart';
 
-
 class SeatSelectionScreen extends StatefulWidget {
   final Event event;
 
@@ -22,22 +21,29 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   bool isValidPromo = false;
   List<String> selectedSeats = [];
 
-
   @override
   void initState() {
     super.initState();
-    seats = List.generate(6, (row) => List.generate(3, (col) {
+
+    // Ensure event.seats has the correct dimensions
+    seats = List.generate(6, (row) => List.generate(8, (col) {
+      bool isOccupied = false;
+
+      if (row < widget.event.seats.length && col < widget.event.seats[row].length) {
+        isOccupied = widget.event.seats[row][col].isOccupied;
+      }
+
       return Seat(
         row: row,
         col: col,
-        isOccupied: widget.event.seats[row][col].isOccupied,
+        isOccupied: isOccupied,
       );
     }));
   }
 
   String getSeatLabel(int row, int col) {
-    String rowLetter = String.fromCharCode(65 + row); // Converts 0 -> 'A', 1 -> 'B'
-    return "$rowLetter${col + 1}"; // A1, A2, B1, etc.
+    String rowLetter = String.fromCharCode(65 + row);
+    return "$rowLetter${col + 1}";
   }
 
   void toggleSeat(int row, int col) {
@@ -91,14 +97,13 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     );
 
     if (paymentSuccess == true) {
-      // ✅ **Only after payment, mark seats as occupied**
       setState(() {
         for (var seatLabel in selectedSeats) {
-          int row = seatLabel.codeUnitAt(0) - 65; // Convert 'A' -> 0, 'B' -> 1
-          int col = int.parse(seatLabel.substring(1)) - 1; // Convert '1' -> 0
+          int row = seatLabel.codeUnitAt(0) - 65;
+          int col = int.parse(seatLabel.substring(1)) - 1;
           seats[row][col].isOccupied = true;
         }
-        selectedSeats.clear(); // Clear selection after booking
+        selectedSeats.clear();
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -116,71 +121,47 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text("Select Your Seats",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-
-            Expanded(
-              child: SingleChildScrollView(
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 6 * 3,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 1.1,
-                  ),
-                  itemBuilder: (context, index) {
-                    int row = index ~/ 3;
-                    int col = index % 3;
-                    bool isOccupied = seats[row][col].isOccupied;
-                    String seatLabel = getSeatLabel(row, col);
-
-                    return GestureDetector(
-                      onTap: () => toggleSeat(row, col),
-                      child: Container(
-                        margin: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: isOccupied
-                              ? Colors.red
-                              : (selectedSeats.contains(seatLabel) ? Colors.orange : Colors.green[400]),
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(2, 2),
-                            )
-                          ],
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                isOccupied
-                                    ? Icons.close
-                                    : (selectedSeats.contains(seatLabel) ? Icons.check_circle : Icons.check),
-                                color: Colors.white,
-                              ),
-                              Text(
-                                seatLabel,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+            const Text(" ",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              height: 5,
+              width: double.infinity,
+              color: Colors.black,
             ),
 
-            const SizedBox(height: 10),
+            Expanded(
+              child: GridView.builder(
+                shrinkWrap: true,
+                itemCount: 6 * 8,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 8,
+                  childAspectRatio: 1.2,
+                ),
+                itemBuilder: (context, index) {
+                  int row = index ~/ 8;
+                  int col = index % 8;
+                  bool isOccupied = seats[row][col].isOccupied;
+                  String seatLabel = getSeatLabel(row, col);
+
+                  return GestureDetector(
+                    onTap: () => toggleSeat(row, col),
+                    child: Container(
+                      margin: const EdgeInsets.all(6),
+                      child: Icon(
+                        Icons.event_seat,
+                        size: 30,
+                        color: isOccupied
+                            ? Colors.red
+                            : (selectedSeats.contains(seatLabel)
+                            ? Colors.orange
+                            : Colors.green[400]),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
 
             if (selectedSeats.isNotEmpty)
               Column(
@@ -202,13 +183,6 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(2, 2),
-                  )
-                ],
               ),
               child: TextField(
                 controller: promoController,
@@ -223,14 +197,11 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               ),
             ),
 
-            const SizedBox(height: 10),
-
             if (isValidPromo)
               Text(
                 "Promo Applied: ${discount * 100}% off!",
                 style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
               ),
-            const SizedBox(height: 10),
 
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -243,6 +214,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ),
+
             const SizedBox(height: 15),
 
             ElevatedButton(
@@ -257,7 +229,6 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
-            const SizedBox(height: 15),
           ],
         ),
       ),
