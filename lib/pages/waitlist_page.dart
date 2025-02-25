@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 class WaitlistPage extends StatelessWidget {
   final List<Map<String, String>> waitlistShows = [
     {
-      "title": "Phantom of the Opera",
-      "introduction": "A timeless musical about love and obsession.",
-      "date": "March 10, 2025",
-      "time": "7:00 PM",
+      "title": "Opera from KentNg",
+      "introduction": "Famous Malaysia opera singer comes to HELP University.",
+      "date": "May 31, 2025",
+      "time": "8:00 PM",
       "status": "Waiting"
     },
     {
-      "title": "Hamilton",
-      "introduction": "The story of Alexander Hamilton told through hip-hop.",
-      "date": "March 15, 2025",
-      "time": "8:00 PM",
+      "title": "Radical Optimisim Tour",
+      "introduction": "Dua Lipa's Asia Tour at HELP University.",
+      "date": "Nov 23, 2025",
+      "time": "8:30 PM",
       "status": "Waiting"
     },
     {
@@ -27,17 +27,17 @@ class WaitlistPage extends StatelessWidget {
 
   final List<Map<String, String>> availableShows = [
     {
-      "title": "The Lion King",
-      "introduction": "A spectacular adaptation of Disney’s animated film.",
-      "date": "March 12, 2025",
-      "time": "6:00 PM",
+      "title": "Blackpink Concert 2023",
+      "introduction": "K-POP Girl Group Sensation in your area.",
+      "date": "March 4, 2023",
+      "time": "8:00 PM",
       "status": "Available"
     },
     {
-      "title": "Wicked",
-      "introduction": "The untold story of the witches of Oz.",
-      "date": "March 18, 2025",
-      "time": "7:30 PM",
+      "title": "MAMAMOO Concert 2023",
+      "introduction": "MYCON concert exclusive at HELP University.",
+      "date": "Feb 11, 2023",
+      "time": "8:00 PM",
       "status": "Available"
     },
     {

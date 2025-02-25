@@ -5,6 +5,7 @@ import '../pages/login_page.dart'; // Import LoginPage
 import 'admin_profile_page.dart';
 import '../pages/waitlist_page.dart'; // Import Waitlist Page
 import 'CheckInSelectionScreen.dart';
+import 'add_show.dart'; // Import Add Show Page ✅
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -51,6 +52,17 @@ class HomeScreen extends StatelessWidget {
                 );
               },
               child: Text("Admin Profile"),
+            ),
+            SizedBox(height: 10), // ✅ Add some spacing
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to Add Show Page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddShowPage()),
+                );
+              },
+              child: Text("Add New Show"), // ✅ "Add Show" Button
             ),
           ],
         ),

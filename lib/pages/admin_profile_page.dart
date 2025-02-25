@@ -44,7 +44,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                   isEditing = !isEditing;
                 });
               },
-              child: Text(isEditing ? "Save" : "Edit Credentials"),
+              child: Text(isEditing ? "Save Changes" : "Edit Credentials"),
             ),
             SizedBox(height: 10),
             ElevatedButton(
