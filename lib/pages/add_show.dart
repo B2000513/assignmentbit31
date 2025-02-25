@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import '../models/seats.dart';
 
 class AddShowPage extends StatefulWidget {
+  const AddShowPage({super.key});
+
   @override
   _AddShowPageState createState() => _AddShowPageState();
 }
