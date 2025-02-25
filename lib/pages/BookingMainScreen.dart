@@ -1,3 +1,4 @@
+import 'package:assignmentbit31/pages/waitlist_page.dart';
 import 'package:flutter/material.dart';
 import '../models/events.dart'; // Import Event model
 import '../pages/eventDetailPage.dart';
@@ -173,6 +174,19 @@ class BookingMainScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => CheckInSelectionScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.hourglass_bottom),
+            title: const Text("Waitlist"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WaitlistPage(),
                 ),
               );
             },

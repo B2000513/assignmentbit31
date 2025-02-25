@@ -12,6 +12,18 @@ class LoginPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // 🚀 Welcome Message
+            Text(
+              "Welcome to HELP EMS",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 20), // Space between title and input fields
+
             TextField(
               decoration: InputDecoration(labelText: "Email"),
             ),
@@ -21,6 +33,7 @@ class LoginPage extends StatelessWidget {
               obscureText: true,
             ),
             SizedBox(height: 20),
+
             ElevatedButton(
               onPressed: () {
                 // Navigate to Home Screen after login
@@ -32,6 +45,7 @@ class LoginPage extends StatelessWidget {
               child: Text("Login"),
             ),
             SizedBox(height: 10),
+
             TextButton(
               onPressed: () {
                 // Navigate to Sign-Up Page

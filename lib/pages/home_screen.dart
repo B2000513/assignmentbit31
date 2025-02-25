@@ -4,6 +4,7 @@ import '../pages/user_profile_page.dart'; // Import UserProfilePage
 import '../pages/login_page.dart'; // Import LoginPage
 import 'admin_profile_page.dart';
 import '../pages/waitlist_page.dart'; // Import Waitlist Page
+import 'CheckInSelectionScreen.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -100,6 +101,19 @@ class HomeScreen extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               // TODO: Navigate to Settings Page
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.list_alt),
+            title: const Text("Ticket"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CheckInSelectionScreen(),
+                ),
+              );
             },
           ),
           ListTile(
