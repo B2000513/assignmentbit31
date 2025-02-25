@@ -44,8 +44,9 @@ class BookingMainScreen extends StatelessWidget {
                     //   Event Image
                     ClipRRect(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                      child: Image.network(
-                        event.image,
+                      child: Image.asset(
+
+                        'assets/concert.jpg',
                         height: 180,
                         width: double.infinity,
                         fit: BoxFit.cover,

@@ -8,34 +8,43 @@ class CheckInSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Select Your Event")),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: eventList.length, // List of events
-        itemBuilder: (context, index) {
-          final event = eventList[index];
+      appBar: AppBar(
+        title: const Text("Select Your Event"),
+        centerTitle: true,
+        elevation: 0,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+        child: ListView.separated(
+          itemCount: eventList.length,
+          separatorBuilder: (context, index) => Divider(height: 1, thickness: 0.5, color: Colors.grey[300]),
+          itemBuilder: (context, index) {
+            final event = eventList[index];
 
-          return Card(
-            elevation: 4,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: ListTile(
-              leading: Image.network(event.image, width: 50, height: 50, fit: BoxFit.cover),
-              title: Text(event.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-              trailing: const Icon(Icons.arrow_forward_ios),
+            return ListTile(
+              contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset('assets/concert.jpg', width: 60, height: 60, fit: BoxFit.cover),
+              ),
+              title: Text(event.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              subtitle: Text("Tap to check-in", style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+              trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[600]),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              tileColor: Colors.white,
               onTap: () {
-                //     Navigate to QR Ticket Screen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CheckInScreen(ticketId: event.title.hashCode.toString()), // Generate a unique QR
+                    builder: (context) => CheckInScreen(ticketId: event.title.hashCode.toString()),
                   ),
                 );
               },
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
+      backgroundColor: Colors.grey[100],
     );
   }
 }
