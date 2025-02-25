@@ -3,6 +3,7 @@ import 'package:assignmentbit31/models/events.dart';
 import 'paymentScreen.dart';
 import '../models/seats.dart';
 
+
 class SeatSelectionScreen extends StatefulWidget {
   final Event event;
 
