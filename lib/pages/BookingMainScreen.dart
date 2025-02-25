@@ -16,7 +16,7 @@ class BookingMainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Book Your Event")),
-      drawer: _buildSidebar(context), // 🎯 Sidebar (Drawer)
+      drawer: _buildSidebar(context), //   Sidebar (Drawer)
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView.builder(
@@ -26,7 +26,7 @@ class BookingMainScreen extends StatelessWidget {
 
             return GestureDetector(
               onTap: () {
-                // 🎯 Navigate to Event Detail Page
+                //   Navigate to Event Detail Page
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -41,7 +41,7 @@ class BookingMainScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 🎯 Event Image
+                    //   Event Image
                     ClipRRect(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                       child: Image.network(
@@ -60,7 +60,7 @@ class BookingMainScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // 🎯 Event Details & Booking Button
+                    //  Event Details & Booking Button
                     Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: Column(
@@ -120,7 +120,7 @@ class BookingMainScreen extends StatelessWidget {
     );
   }
 
-  // 🎯 Sidebar (Drawer) Widget
+  //   Sidebar (Drawer) Widget
   Widget _buildSidebar(BuildContext context) {
     return Drawer(
       child: ListView(
