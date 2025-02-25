@@ -1,10 +1,12 @@
-
 import 'package:flutter/material.dart';
 import '../models/events.dart'; // Import Event model
 import '../pages/eventDetailPage.dart';
 import 'seatSelection.dart';
 import 'waitlistScreen.dart'; // Import Waitlist Screen
 import 'CheckInSelectionScreen.dart';
+import '../pages/user_profile_page.dart'; // Import UserProfilePage
+import '../pages/login_page.dart'; // Import LoginPage
+
 
 class BookingMainScreen extends StatelessWidget {
   const BookingMainScreen({super.key});
@@ -140,6 +142,10 @@ class BookingMainScreen extends StatelessWidget {
             onTap: () {
               Navigator.pop(context); // Close drawer
               // TODO: Navigate to Profile Page
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UserProfilePage()),
+              );
             },
           ),
           ListTile(
@@ -178,6 +184,10 @@ class BookingMainScreen extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               // TODO: Handle logout
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => LoginPage()),
+              );
             },
           ),
         ],

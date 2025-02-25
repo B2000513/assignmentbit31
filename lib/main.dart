@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../pages/bookingMainScreen.dart';
+import '../pages/login_page.dart';
+
+
 
 void main() {
   runApp(TicketBookingApp());
@@ -16,7 +19,7 @@ class TicketBookingApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: BookingMainScreen(),
+      home: LoginPage(), // Show Login First
     );
   }
 }
