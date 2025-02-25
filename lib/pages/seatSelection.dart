@@ -22,6 +22,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   bool isValidPromo = false;
   List<String> selectedSeats = [];
 
+
   @override
   void initState() {
     super.initState();
