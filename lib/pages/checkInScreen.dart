@@ -20,7 +20,7 @@ class CheckInScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // 🎯 Generate QR Code
+            //    Generate QR Code
             QrImageView(
               data: ticketId, // Ticket ID as QR Data
               version: QrVersions.auto,

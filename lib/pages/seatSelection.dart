@@ -1,10 +1,10 @@
-import 'package:assignmentbit31/models/events.dart';
 import 'package:flutter/material.dart';
+import 'package:assignmentbit31/models/events.dart';
 import 'paymentScreen.dart';
 import '../models/seats.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
-  final Event event; // 🎯 Accepts Event object
+  final Event event;
 
   const SeatSelectionScreen({super.key, required this.event});
 
@@ -19,32 +19,41 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   TextEditingController promoController = TextEditingController();
   double discount = 0.0;
   bool isValidPromo = false;
+  List<String> selectedSeats = [];
 
   @override
   void initState() {
     super.initState();
-
-    // 🎯 Initialize seats based on event
     seats = List.generate(6, (row) => List.generate(3, (col) {
       return Seat(
         row: row,
         col: col,
-        isOccupied: widget.event.seats[row][col].isOccupied, // Load occupied seats
+        isOccupied: widget.event.seats[row][col].isOccupied,
       );
     }));
   }
 
+  String getSeatLabel(int row, int col) {
+    String rowLetter = String.fromCharCode(65 + row); // Converts 0 -> 'A', 1 -> 'B'
+    return "$rowLetter${col + 1}"; // A1, A2, B1, etc.
+  }
+
   void toggleSeat(int row, int col) {
-    if (seats[row][col].isOccupied) return; // ❌ Prevent selecting occupied seats
+    if (seats[row][col].isOccupied) return;
+
     setState(() {
-      seats[row][col].isOccupied = !seats[row][col].isOccupied;
+      String seatLabel = getSeatLabel(row, col);
+      if (selectedSeats.contains(seatLabel)) {
+        selectedSeats.remove(seatLabel);
+      } else {
+        selectedSeats.add(seatLabel);
+      }
       calculateTotal();
     });
   }
 
   void calculateTotal() {
-    int selectedSeats = seats.expand((row) => row).where((seat) => seat.isOccupied).length;
-    totalPrice = selectedSeats * seatPrice * (1 - discount);
+    totalPrice = selectedSeats.length * seatPrice * (1 - discount);
   }
 
   void applyPromoCode() {
@@ -65,6 +74,13 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   }
 
   void proceedToPayment() async {
+    if (selectedSeats.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select at least one seat!")),
+      );
+      return;
+    }
+
     final paymentSuccess = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -73,15 +89,14 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     );
 
     if (paymentSuccess == true) {
-      // 🎯 Confirm booking by marking seats as occupied
+      // ✅ **Only after payment, mark seats as occupied**
       setState(() {
-        for (var row in seats) {
-          for (var seat in row) {
-            if (seat.isOccupied) {
-              widget.event.seats[seat.row][seat.col].isOccupied = true;
-            }
-          }
+        for (var seatLabel in selectedSeats) {
+          int row = seatLabel.codeUnitAt(0) - 65; // Convert 'A' -> 0, 'B' -> 1
+          int col = int.parse(seatLabel.substring(1)) - 1; // Convert '1' -> 0
+          seats[row][col].isOccupied = true;
         }
+        selectedSeats.clear(); // Clear selection after booking
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -93,44 +108,67 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Select Seats for ${widget.event.title}")),
+      appBar: AppBar(title: Text("Select Seats - ${widget.event.title}")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text("Select Your Seats", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("Select Your Seats",
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
 
-            // 🎯 Scrollable Seat Grid
             Expanded(
               child: SingleChildScrollView(
                 child: GridView.builder(
                   shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(), // Prevent nested scrolling
+                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: 6 * 3,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
-                    childAspectRatio: 1.2,
+                    childAspectRatio: 1.1,
                   ),
                   itemBuilder: (context, index) {
                     int row = index ~/ 3;
                     int col = index % 3;
+                    bool isOccupied = seats[row][col].isOccupied;
+                    String seatLabel = getSeatLabel(row, col);
+
                     return GestureDetector(
                       onTap: () => toggleSeat(row, col),
                       child: Container(
-                        margin: const EdgeInsets.all(4),
+                        margin: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: seats[row][col].isOccupied ? Colors.red : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(5),
+                          color: isOccupied
+                              ? Colors.red
+                              : (selectedSeats.contains(seatLabel) ? Colors.orange : Colors.green[400]),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(2, 2),
+                            )
+                          ],
                         ),
                         child: Center(
-                          child: Text(
-                            "Seat ${index + 1}",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: seats[row][col].isOccupied ? Colors.white : Colors.black,
-                            ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                isOccupied
+                                    ? Icons.close
+                                    : (selectedSeats.contains(seatLabel) ? Icons.check_circle : Icons.check),
+                                color: Colors.white,
+                              ),
+                              Text(
+                                seatLabel,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -140,35 +178,84 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
-            // 🎯 Promo Code Input
-            TextField(
-              controller: promoController,
-              decoration: InputDecoration(
-                labelText: "Enter Promo Code",
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.check),
-                  onPressed: applyPromoCode,
+            if (selectedSeats.isNotEmpty)
+              Column(
+                children: [
+                  const Text(
+                    "Selected Seats:",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    selectedSeats.join(", "),
+                    style: const TextStyle(fontSize: 16, color: Colors.blue),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ),
+
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(2, 2),
+                  )
+                ],
+              ),
+              child: TextField(
+                controller: promoController,
+                decoration: InputDecoration(
+                  hintText: "Enter Promo Code",
+                  border: InputBorder.none,
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.check, color: Colors.blue),
+                    onPressed: applyPromoCode,
+                  ),
                 ),
               ),
             ),
+
             const SizedBox(height: 10),
 
             if (isValidPromo)
-              Text("Promo Applied: ${discount * 100}% off!", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+              Text(
+                "Promo Applied: ${discount * 100}% off!",
+                style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+              ),
             const SizedBox(height: 10),
 
-            // 🎯 Total Price Display
-            Text("Total Price: \$${totalPrice.toStringAsFixed(2)}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                "Total Price: \$${totalPrice.toStringAsFixed(2)}",
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 15),
 
-            // 🎯 Proceed Button
             ElevatedButton(
               onPressed: proceedToPayment,
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
-              child: const Text("Proceed to Payment", style: TextStyle(fontSize: 16)),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
+                backgroundColor: Colors.blue,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text(
+                "Proceed to Payment",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
             ),
+            const SizedBox(height: 15),
           ],
         ),
       ),

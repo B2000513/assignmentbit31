@@ -16,7 +16,7 @@ class PaymentScreen extends StatelessWidget {
           children: [
             SizedBox(height: 20),
 
-            // 🎯 Total Amount
+            //       Total Amount
             Text(
               "Total Amount: \$${totalPrice.toStringAsFixed(2)}",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -24,7 +24,7 @@ class PaymentScreen extends StatelessWidget {
 
             SizedBox(height: 20),
 
-            // 🎯 Payment Options
+            //       Payment Options
             Text(
               "Choose Payment Method:",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
@@ -63,7 +63,7 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
-  // 🎯 Mock PayPal Payment Processing
+  //       Mock PayPal Payment Processing
   void _processPayPalPayment(BuildContext context) {
     // Simulate payment processing
     showDialog(

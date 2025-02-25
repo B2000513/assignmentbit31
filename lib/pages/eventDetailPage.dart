@@ -15,7 +15,7 @@ class EventDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🎯 Event Image
+            //      Event Image
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
@@ -30,21 +30,21 @@ class EventDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // 🎯 Event Title
+            //      Event Title
             Text(
               event.title,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
 
-            // 🎯 Available Seats
+            //      Available Seats
             Text(
               "Available Seats: ${event.availableSeats}",
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 20),
 
-            // 🎯 Buy Seat Button
+            //      Buy Seat Button
             Center(
               child: ElevatedButton(
                 onPressed: () {

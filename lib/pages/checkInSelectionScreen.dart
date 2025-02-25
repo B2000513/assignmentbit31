@@ -24,7 +24,7 @@ class CheckInSelectionScreen extends StatelessWidget {
               title: Text(event.title, style: const TextStyle(fontWeight: FontWeight.bold)),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                // 🎯 Navigate to QR Ticket Screen
+                //     Navigate to QR Ticket Screen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
