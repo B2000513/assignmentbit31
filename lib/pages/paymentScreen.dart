@@ -1,14 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class PaymentScreen extends StatelessWidget {
-  final double totalPrice;
+  final int eventId;
+  final List<Map<String, dynamic>> seatItems;
 
-  const PaymentScreen({super.key, required this.totalPrice});
+  const PaymentScreen({
+    super.key,
+    required this.eventId,
+    required this.seatItems,
+  });
+
+  /// Dynamically compute totalPrice from seatItems
+  double get totalPrice {
+    double sum = 0.0;
+    for (var seat in seatItems) {
+      sum += (seat["price"] ?? 0.0) as double;
+    }
+    return sum;
+  }
+
+  /// The number of seats booked is simply the length of seatItems
+  int get seatsBooked => seatItems.length;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Checkout"), centerTitle: true),
+      appBar: AppBar(title: const Text("Checkout"), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -23,31 +42,51 @@ class PaymentScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Order Summary", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Divider(),
-                    Text("Total Amount: \$${totalPrice.toStringAsFixed(2)}",
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
+                    Text("Order Summary",
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Divider(),
+
+                    // List each seat & price
+                    for (var seat in seatItems) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Seat ${seat["seatLabel"]}"),
+                          Text("\$${(seat["price"] ?? 0.0).toStringAsFixed(2)}"),
+                        ],
+                      ),
+                    ],
+
+                    const SizedBox(height: 10),
+                    // Display total
+                    Text(
+                      "Total Amount: \$${totalPrice.toStringAsFixed(2)}",
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green),
+                    ),
                   ],
                 ),
               ),
             ),
 
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
 
             // Payment Methods
-            Text("Select Payment Method", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
+            const Text("Select Payment Method",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
 
-            _buildPaymentButton(context, Icons.payment, "Pay with PayPal", Colors.blue[800], _processPayPalPayment),
-            SizedBox(height: 10),
-            _buildPaymentButton(context, Icons.credit_card, "Pay with Credit Card", Colors.grey[700], _showCreditCardDialog),
+            _buildPaymentButton(context, Icons.payment, "Pay with PayPal", Colors.blue[800],
+                    () => _processPayment(context)),
+            const SizedBox(height: 10),
+            _buildPaymentButton(context, Icons.credit_card, "Pay with Credit Card", Colors.grey[700],
+                    () => _showCreditCardDialog(context)),
 
-            Spacer(),
+            const Spacer(),
 
             // Cancel Button
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Cancel", style: TextStyle(fontSize: 16, color: Colors.red)),
+              child: const Text("Cancel", style: TextStyle(fontSize: 16, color: Colors.red)),
             ),
           ],
         ),
@@ -55,63 +94,89 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPaymentButton(BuildContext context, IconData icon, String text, Color? color, Function(BuildContext) onPressed) {
+  Widget _buildPaymentButton(BuildContext context, IconData icon, String text, Color? color, VoidCallback onPressed) {
     return ElevatedButton(
-      onPressed: () => onPressed(context),
+      onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
-        padding: EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: Colors.white),
-          SizedBox(width: 10),
-          Text(text, style: TextStyle(fontSize: 16, color: Colors.white)),
+          const SizedBox(width: 10),
+          Text(text, style: const TextStyle(fontSize: 16, color: Colors.white)),
         ],
       ),
     );
   }
 
-  void _processPayPalPayment(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Payment Successful"),
-        content: Text("Your payment of \$${totalPrice.toStringAsFixed(2)} has been processed via PayPal."),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: Text("OK"),
-          ),
-        ],
-      ),
+  // ✅ Process Payment & Update Available Seats
+  void _processPayment(BuildContext context) async {
+    final url = Uri.parse('http://192.168.1.6/event_management/api/update_seat.php');
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "event_id": eventId,
+        "seats_booked": seatsBooked, // If your API only needs seat count
+      }),
     );
+
+    if (response.statusCode == 200) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Payment Successful"),
+          content: Text(
+            "Your payment of \$${totalPrice.toStringAsFixed(2)} has been processed. Seats updated!",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update seats. Please try again.")),
+      );
+    }
   }
 
   void _showCreditCardDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Credit Card Payment"),
+        title: const Text("Credit Card Payment"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Enter your credit card details."),
-            SizedBox(height: 10),
-            TextField(decoration: InputDecoration(labelText: "Card Number"), keyboardType: TextInputType.number),
-            TextField(decoration: InputDecoration(labelText: "Expiry Date"), keyboardType: TextInputType.datetime),
-            TextField(decoration: InputDecoration(labelText: "CVV"), keyboardType: TextInputType.number),
+            const Text("Enter your credit card details."),
+            const SizedBox(height: 10),
+            TextField(decoration: const InputDecoration(labelText: "Card Number"), keyboardType: TextInputType.number),
+            TextField(decoration: const InputDecoration(labelText: "Expiry Date"), keyboardType: TextInputType.datetime),
+            TextField(decoration: const InputDecoration(labelText: "CVV"), keyboardType: TextInputType.number),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
-          ElevatedButton(onPressed: () => Navigator.pop(context), child: Text("Submit")),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _processPayment(context); // Reuse the same logic after CC payment
+            },
+            child: const Text("Submit"),
+          ),
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../pages/bookingMainScreen.dart';
 import '../pages/login_page.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart'; // Import the localization helper file
 
 
 
@@ -15,6 +16,17 @@ class TicketBookingApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      locale: const Locale('en'), // Default to English
+      supportedLocales: const [
+        Locale('en', ''), // English
+        Locale('ko', ''), // Korean
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate, // Custom localization class
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       title: 'Ticket Booking',
       theme: ThemeData(
         primarySwatch: Colors.blue,
