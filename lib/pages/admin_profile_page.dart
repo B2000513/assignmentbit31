@@ -3,6 +3,8 @@ import 'signup_org_page.dart';
 import 'genrep_mainpage.dart';
 
 class AdminProfilePage extends StatefulWidget {
+  const AdminProfilePage({super.key});
+
   @override
   _AdminProfilePageState createState() => _AdminProfilePageState();
 }

@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:pdf/pdf.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 
@@ -22,7 +21,7 @@ class GenRepReportPage extends StatelessWidget {
   final int maxSeatOccupancy = 500;
   late final double seatOccupancyPercentage;
 
-  GenRepReportPage({
+  GenRepReportPage({super.key, 
     required this.reportType,
     required this.timeframe,
     this.startDate,
@@ -223,7 +222,7 @@ class Indicator extends StatelessWidget {
   final Color color;
   final String text;
 
-  Indicator({required this.color, required this.text});
+  const Indicator({super.key, required this.color, required this.text});
 
   @override
   Widget build(BuildContext context) {

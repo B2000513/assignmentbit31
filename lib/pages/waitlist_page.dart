@@ -48,6 +48,7 @@ class WaitlistPage extends StatelessWidget {
       "status": "Available"
     },
   ];
+   WaitlistPage({super.key});
 
   @override
   Widget build(BuildContext context) {
