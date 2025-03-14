@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../pages/genrep_report.dart';
 
 class GenRepMainPage extends StatefulWidget {
+  const GenRepMainPage({super.key});
+
   @override
   _GenerateReportMainPageState createState() => _GenerateReportMainPageState();
 }
