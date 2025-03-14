@@ -1,153 +1,27 @@
 import 'package:flutter/material.dart';
-import 'bookingMainScreen.dart'; // Import your BookingMainScreen
-import '../pages/user_profile_page.dart'; // Import UserProfilePage
-import '../pages/login_page.dart'; // Import LoginPage
+import 'bookingMainScreen.dart';
+import '../pages/user_profile_page.dart';
+import '../pages/login_page.dart';
 import 'admin_profile_page.dart';
-import '../pages/waitlist_page.dart'; // Import Waitlist Page
+import '../pages/waitlist_page.dart';
 import 'CheckInSelectionScreen.dart';
-import 'add_show.dart'; // Import Add Show Page ✅
+import 'add_show.dart';
+import '../l10n/app_localizations.dart'; // Import Localization
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final localization = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Welcome to HELP EMS App"),
+        title: Text(localization.translate("welcome")),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              // Navigate back to login when logout is clicked
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-      drawer: _buildSidebar(context), // 🎯 Sidebar
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "Welcome to HELP EMS App",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // Navigate to BookingMainScreen when button is clicked
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => BookingMainScreen()),
-                );
-              },
-              child: const Text("Book a Show"),
-            ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AdminProfilePage()),
-                );
-              },
-              child: Text("Admin Profile"),
-            ),
-            SizedBox(height: 10), // ✅ Add some spacing
-            ElevatedButton(
-              onPressed: () {
-                // Navigate to Add Show Page
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AddShowPage()),
-                );
-              },
-              child: Text("Add New Show"), // ✅ "Add Show" Button
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 🎯 Sidebar (Drawer)
-  Widget _buildSidebar(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.event, color: Colors.white, size: 50),
-                SizedBox(height: 10),
-                Text("Event Booking",
-                    style: TextStyle(color: Colors.white, fontSize: 20)),
-              ],
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text("Profile"),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => UserProfilePage()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.payment),
-            title: const Text("Payment"),
-            onTap: () {
-              Navigator.pop(context);
-              // TODO: Navigate to Payment Page
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text("Settings"),
-            onTap: () {
-              Navigator.pop(context);
-              // TODO: Navigate to Settings Page
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.list_alt),
-            title: const Text("Ticket"),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CheckInSelectionScreen(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.hourglass_bottom), // ⏳ Waitlist Icon
-            title: const Text("Waitlist"),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) =>
-                    WaitlistPage()), // Navigate to Waitlist
-              );
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text("Logout"),
-            onTap: () {
-              Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => LoginPage()),
@@ -156,7 +30,96 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
+      drawer: _buildSidebar(context),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              localization.translate("welcome"),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            _buildButton(
+              context,
+              localization.translate("bookShow"),
+              BookingMainScreen(),
+            ),
+            _buildButton(
+              context,
+              localization.translate("adminProfile"),
+              AdminProfilePage(),
+            ),
+            _buildButton(
+              context,
+              localization.translate("addNewShow"),
+              AddShowPage(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 🎯 Reusable Button Builder
+  Widget _buildButton(BuildContext context, String text, Widget page) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: ElevatedButton(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => page),
+        ),
+        child: Text(text),
+      ),
+    );
+  }
+
+  // 🎯 Sidebar (Drawer)
+  Widget _buildSidebar(BuildContext context) {
+    final localization = AppLocalizations.of(context);
+
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(color: Colors.blue),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.event, color: Colors.white, size: 50),
+                const SizedBox(height: 10),
+                Text(
+                  localization.translate("eventBooking"),
+                  style: const TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              ],
+            ),
+          ),
+          _buildListTile(context, Icons.person, localization.translate("profile"), UserProfilePage()),
+          _buildListTile(context, Icons.list_alt, localization.translate("ticket"), CheckInSelectionScreen()),
+          _buildListTile(context, Icons.hourglass_bottom, localization.translate("waitlist"), WaitlistPage()),
+          const Divider(),
+          _buildListTile(context, Icons.logout, localization.translate("logout"), LoginPage(), isLogout: true),
+        ],
+      ),
+    );
+  }
+
+  // 🎯 Reusable ListTile
+  Widget _buildListTile(BuildContext context, IconData icon, String title, Widget page, {bool isLogout = false}) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      onTap: () {
+        Navigator.pop(context);
+        if (isLogout) {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => page));
+        } else {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+        }
+      },
     );
   }
 }
-

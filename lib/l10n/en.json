@@ -1,0 +1,22 @@
+{
+  "welcome": "Welcome to HELP EMS App",
+  "bookShow": "Book a Show",
+  "adminProfile": "Admin Profile",
+  "addNewShow": "Add New Show",
+  "profile": "Profile",
+  "payment": "Payment",
+  "settings": "Settings",
+  "ticket": "Ticket",
+  "waitlist": "Waitlist",
+  "logout": "Logout",
+  "add_show": "Add New Show",
+  "show_name": "Show Name",
+  "introduction": "Introduction",
+  "date": "Date",
+  "time": "Time",
+  "location": "Location",
+  "select_poster": "Select Poster Image",
+  "total_seats": "Total Seats",
+  "add_show_success": "Show Added Successfully!",
+  "fill_all_fields": "Please fill in all fields correctly"
+}

@@ -3,8 +3,6 @@ import 'signupuser_page.dart';
 import 'home_screen.dart'; // Import the new Home Screen
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

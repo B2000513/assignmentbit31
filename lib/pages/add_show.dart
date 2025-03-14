@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../models/seats.dart';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as p;
 
 class AddShowPage extends StatefulWidget {
   const AddShowPage({super.key, u});
@@ -11,6 +13,8 @@ class AddShowPage extends StatefulWidget {
 }
 
 class _AddShowPageState extends State<AddShowPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   final TextEditingController nameController = TextEditingController();
   final TextEditingController introController = TextEditingController();
   final TextEditingController dateController = TextEditingController();
@@ -22,183 +26,211 @@ class _AddShowPageState extends State<AddShowPage> {
   File? _posterImage;
   final ImagePicker _picker = ImagePicker();
 
-  // Function to pick an image from the gallery
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+    if (pickedFile != null && mounted) {
       setState(() {
         _posterImage = File(pickedFile.path);
       });
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Add New Show")),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Show Name Input
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(labelText: "Show Name"),
-            ),
-            SizedBox(height: 10),
-
-            // Introduction Input
-            TextField(
-              controller: introController,
-              decoration: InputDecoration(labelText: "Introduction"),
-              maxLines: 3,
-            ),
-            SizedBox(height: 10),
-
-            // Date Input
-            TextField(
-              controller: dateController,
-              decoration: InputDecoration(labelText: "Date"),
-              onTap: () async {
-                DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2022),
-                  lastDate: DateTime(2030),
-                );
-                if (pickedDate != null) {
-                  setState(() {
-                    dateController.text = "${pickedDate.toLocal()}".split(' ')[0];
-                  });
-                }
-              },
-              readOnly: true,
-            ),
-            SizedBox(height: 10),
-
-            // Time Input
-            TextField(
-              controller: timeController,
-              decoration: InputDecoration(labelText: "Time"),
-              onTap: () async {
-                TimeOfDay? pickedTime = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                );
-                if (pickedTime != null) {
-                  setState(() {
-                    timeController.text = pickedTime.format(context);
-                  });
-                }
-              },
-              readOnly: true,
-            ),
-            SizedBox(height: 10),
-
-            // Location Input
-            TextField(
-              controller: locationController,
-              decoration: InputDecoration(labelText: "Location"),
-            ),
-            SizedBox(height: 10),
-
-            // Row Input
-            TextField(
-              controller: rowController,
-              decoration: InputDecoration(labelText: "Number of Rows"),
-              keyboardType: TextInputType.number,
-              onChanged: (value) => setState(() {}),
-            ),
-            SizedBox(height: 10),
-
-            // Column Input
-            TextField(
-              controller: colController,
-              decoration: InputDecoration(labelText: "Number of Columns"),
-              keyboardType: TextInputType.number,
-              onChanged: (value) => setState(() {}),
-            ),
-            SizedBox(height: 10),
-
-            // Display Total Seats
-            Text(
-              "Total Seats: ${_calculateTotalSeats()}",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-
-            // Poster Upload Button
-            Center(
-              child: Column(
-                children: [
-                  _posterImage != null
-                      ? Image.file(_posterImage!, height: 150)
-                      : Text("No poster selected"),
-                  ElevatedButton(
-                    onPressed: _pickImage,
-                    child: Text("Select Poster Image"),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20),
-
-            // Submit Button
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  _submitShow();
-                },
-                child: Text("Add Show"),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Function to calculate total seats
   int _calculateTotalSeats() {
     int rows = int.tryParse(rowController.text) ?? 0;
     int cols = int.tryParse(colController.text) ?? 0;
     return rows * cols;
   }
 
-  // Function to handle form submission
-  void _submitShow() {
-    String showName = nameController.text;
-    String introduction = introController.text;
-    String date = dateController.text;
-    String time = timeController.text;
-    String location = locationController.text;
-    int rows = int.tryParse(rowController.text) ?? 0;
-    int cols = int.tryParse(colController.text) ?? 0;
-    int totalSeats = _calculateTotalSeats();
-
-    if (showName.isEmpty || date.isEmpty || time.isEmpty || location.isEmpty || rows == 0 || cols == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please fill in all fields correctly")),
-      );
+  Future<void> _submitShow() async {
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Example of creating seat objects
-    List<Seat> seats = [];
-    for (int r = 0; r < rows; r++) {
-      for (int c = 0; c < cols; c++) {
-        seats.add(Seat(row: r, col: c));
-      }
+    String? base64Image;
+    String? fileName;
+
+    if (_posterImage != null) {
+      List<int> imageBytes = await _posterImage!.readAsBytes();
+      base64Image = base64Encode(imageBytes);
+      fileName = p.basename(_posterImage!.path);
     }
 
-    // Print data for now (You can replace this with actual data submission logic)
-    print("Show Added: $showName, $date, $time, $location, Seats: $totalSeats");
+    Map<String, dynamic> eventData = {
+      "title": nameController.text,
+      "description": introController.text,
+      "venue": locationController.text,
+      "event_date": dateController.text,
+      "event_time": timeController.text,
+      "available_seats": _calculateTotalSeats(),
+      "rows": int.tryParse(rowController.text) ?? 0,
+      "cols": int.tryParse(colController.text) ?? 0,
+      "poster_image": base64Image,
+      "poster_name": fileName,
+    };
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Show Added Successfully!")),
+    try {
+      var response = await http.post(
+        Uri.parse("http://192.168.1.6/event_management/api/add_event.php"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(eventData),
+      );
+
+      var jsonResponse = jsonDecode(response.body);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(jsonResponse["message"] ?? "Unknown error")),
+        );
+        if (jsonResponse["success"] == true) {
+          Navigator.pop(context);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error adding show. Please try again.")),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Add New Show")),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Enter Show Details", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                _buildTextField(nameController, "Show Name"),
+                _buildTextField(introController, "Introduction", maxLines: 3),
+                _buildDatePicker(dateController, "Select Date"),
+                _buildTimePicker(timeController, "Select Time"),
+                _buildTextField(locationController, "Location"),
+                _buildTextField(rowController, "Number of Rows", isNumeric: true),
+                _buildTextField(colController, "Number of Columns", isNumeric: true),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Text(
+                    "Total Seats: ${_calculateTotalSeats()}",
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+                Center(
+                  child: Column(
+                    children: [
+                      _posterImage != null
+                          ? Image.file(_posterImage!, height: 150)
+                          : const Text("No Image Selected"),
+                      const SizedBox(height: 10),
+                      ElevatedButton.icon(
+                        onPressed: _pickImage,
+                        icon: const Icon(Icons.image),
+                        label: const Text("Select Poster"),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                Center(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _submitShow,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        textStyle: const TextStyle(fontSize: 16),
+                      ),
+                      child: const Text("Add Show"),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
+  }
 
-    Navigator.pop(context);
+  Widget _buildTextField(TextEditingController controller, String label, {bool isNumeric = false, int maxLines = 1}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+        maxLines: maxLines,
+        validator: (value) => value!.isEmpty ? "$label is required" : null,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatePicker(TextEditingController controller, String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: TextFormField(
+        controller: controller,
+        readOnly: true,
+        validator: (value) => value!.isEmpty ? "Date is required" : null,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        onTap: () async {
+          DateTime? pickedDate = await showDatePicker(
+            context: context,
+            initialDate: DateTime.now(),
+            firstDate: DateTime(2022),
+            lastDate: DateTime(2030),
+          );
+          if (pickedDate != null && mounted) {
+            setState(() {
+              controller.text = "${pickedDate.toLocal()}".split(' ')[0];
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildTimePicker(TextEditingController controller, String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: TextFormField(
+        controller: controller,
+        readOnly: true,
+        validator: (value) => value!.isEmpty ? "Time is required" : null,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        onTap: () async {
+          TimeOfDay? pickedTime = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.now(),
+          );
+          if (pickedTime != null && mounted) {
+            setState(() {
+              controller.text = pickedTime.format(context);
+            });
+          }
+        },
+      ),
+    );
   }
 }
