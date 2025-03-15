@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Ensure SharedPreferences is imported
 import 'bookingMainScreen.dart';
 import '../pages/user_profile_page.dart';
 import '../pages/login_page.dart';
@@ -6,7 +7,8 @@ import 'admin_profile_page.dart';
 import '../pages/waitlist_page.dart';
 import 'CheckInSelectionScreen.dart';
 import 'add_show.dart';
-import '../l10n/app_localizations.dart'; // Import Localization
+import '../l10n/app_localizations.dart';// Import Localization
+import '../widgets/sidebar.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -30,7 +32,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      drawer: _buildSidebar(context),
+      drawer: const SidebarWidget(), // ✅ Updated to fetch user ID properly
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -61,6 +63,14 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // 🎯 Fetch userId from SharedPreferences
+  Future<int?> _getUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getInt("user_id");
+  }
+
+
+
   // 🎯 Reusable Button Builder
   Widget _buildButton(BuildContext context, String text, Widget page) {
     return Padding(
@@ -71,38 +81,6 @@ class HomeScreen extends StatelessWidget {
           MaterialPageRoute(builder: (context) => page),
         ),
         child: Text(text),
-      ),
-    );
-  }
-
-  // 🎯 Sidebar (Drawer)
-  Widget _buildSidebar(BuildContext context) {
-    final localization = AppLocalizations.of(context);
-
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(color: Colors.blue),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.event, color: Colors.white, size: 50),
-                const SizedBox(height: 10),
-                Text(
-                  localization.translate("eventBooking"),
-                  style: const TextStyle(color: Colors.white, fontSize: 20),
-                ),
-              ],
-            ),
-          ),
-          _buildListTile(context, Icons.person, localization.translate("profile"), UserProfilePage()),
-          _buildListTile(context, Icons.list_alt, localization.translate("ticket"), CheckInSelectionScreen()),
-          _buildListTile(context, Icons.hourglass_bottom, localization.translate("waitlist"), WaitlistPage()),
-          const Divider(),
-          _buildListTile(context, Icons.logout, localization.translate("logout"), LoginPage(), isLogout: true),
-        ],
       ),
     );
   }

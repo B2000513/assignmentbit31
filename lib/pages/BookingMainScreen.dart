@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'paymentScreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/events.dart';
 import '../pages/eventDetailPage.dart';
 import 'seatSelection.dart';
-import 'waitlistScreen.dart';
+import '../pages/waitListScreen.dart';
 import 'CheckInSelectionScreen.dart';
 import '../pages/user_profile_page.dart';
 import '../pages/login_page.dart';
+import '../widgets/sidebar.dart';
 
 class BookingMainScreen extends StatefulWidget {
   const BookingMainScreen({super.key});
@@ -17,14 +18,29 @@ class BookingMainScreen extends StatefulWidget {
   _BookingMainScreenState createState() => _BookingMainScreenState();
 }
 
+
+
 class _BookingMainScreenState extends State<BookingMainScreen> {
   late Future<List<Event>> eventsFuture;
+
+
 
   @override
   void initState() {
     super.initState();
     eventsFuture = fetchEvents();
   }
+
+
+
+  Future<int?> _getUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getInt("user_id");
+  }
+
+
+
+
 
   Future<List<Event>> fetchEvents() async {
     final url = Uri.parse("http://192.168.1.6/event_management/api/get_event.php");
@@ -62,7 +78,7 @@ class _BookingMainScreenState extends State<BookingMainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Book Your Event")),
-      drawer: _buildSidebar(context),
+      drawer: const SidebarWidget(),
       body: RefreshIndicator(
         onRefresh: _refreshEvents,
         child: Padding(
@@ -151,7 +167,7 @@ class _BookingMainScreenState extends State<BookingMainScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => WaitlistScreen(),
+                                          builder: (context) => WaitlistScreen(eventId: event.id), // Pass event.id here
                                         ),
                                       );
                                     },
@@ -170,49 +186,6 @@ class _BookingMainScreenState extends State<BookingMainScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildSidebar(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Icon(Icons.event, color: Colors.white, size: 50),
-                SizedBox(height: 10),
-                Text("Event Booking", style: TextStyle(color: Colors.white, fontSize: 20)),
-              ],
-            ),
-          ),
-          _buildSidebarItem(context, Icons.person, "Profile", UserProfilePage()),
-          _buildSidebarItem(context, Icons.payment, "Payment", null),
-          _buildSidebarItem(context, Icons.settings, "Settings", null),
-          _buildSidebarItem(context, Icons.list_alt, "Ticket", CheckInSelectionScreen()),
-          _buildSidebarItem(context, Icons.hourglass_bottom, "Waitlist", WaitlistScreen()),
-          const Divider(),
-          _buildSidebarItem(context, Icons.logout, "Logout", LoginPage(), isLogout: true),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSidebarItem(BuildContext context, IconData icon, String title, Widget? page, {bool isLogout = false}) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      onTap: () {
-        Navigator.pop(context);
-        if (isLogout) {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => page!));
-        } else if (page != null) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => page));
-        }
-      },
     );
   }
 }

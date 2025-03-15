@@ -1,118 +1,90 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-class WaitlistPage extends StatelessWidget {
-  final List<Map<String, String>> waitlistShows = [
-    {
-      "title": "Opera from KentNg",
-      "introduction": "Famous Malaysia opera singer comes to HELP University.",
-      "date": "May 31, 2025",
-      "time": "8:00 PM",
-      "status": "Waiting"
-    },
-    {
-      "title": "Radical Optimisim Tour",
-      "introduction": "Dua Lipa's Asia Tour at HELP University.",
-      "date": "Nov 23, 2025",
-      "time": "8:30 PM",
-      "status": "Waiting"
-    },
-    {
-      "title": "Les Misérables",
-      "introduction": "A revolutionary tale of justice and redemption.",
-      "date": "March 20, 2025",
-      "time": "6:30 PM",
-      "status": "Waiting"
-    },
-  ];
+class WaitlistPage extends StatefulWidget {
+  const WaitlistPage({super.key});
 
-  final List<Map<String, String>> availableShows = [
-    {
-      "title": "Blackpink Concert 2023",
-      "introduction": "K-POP Girl Group Sensation in your area.",
-      "date": "March 4, 2023",
-      "time": "8:00 PM",
-      "status": "Available"
-    },
-    {
-      "title": "MAMAMOO Concert 2023",
-      "introduction": "MYCON concert exclusive at HELP University.",
-      "date": "Feb 11, 2023",
-      "time": "8:00 PM",
-      "status": "Available"
-    },
-    {
-      "title": "The Book of Mormon",
-      "introduction": "A hilarious and satirical Broadway musical.",
-      "date": "March 22, 2025",
-      "time": "8:00 PM",
-      "status": "Available"
-    },
-  ];
-   WaitlistPage({super.key});
+  @override
+  _WaitlistPageState createState() => _WaitlistPageState();
+}
+
+class _WaitlistPageState extends State<WaitlistPage> {
+  List<Map<String, dynamic>> waitlistShows = [];
+  List<Map<String, dynamic>> availableShows = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchWaitlistData();
+  }
+
+  Future<void> fetchWaitlistData() async {
+    final response = await http.get(Uri.parse("http://192.168.1.6/event_management/api/get_waitlist.php"));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        waitlistShows = List<Map<String, dynamic>>.from(data["waitlist"]);
+        availableShows = List<Map<String, dynamic>>.from(data["available"]);
+        isLoading = false;
+      });
+    } else {
+      throw Exception("Failed to load data");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Waitlist")),
-      body: Padding(
+      appBar: AppBar(title: const Text("Waitlist")),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Waitlist Section
-            Text("Waitlist", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                itemCount: waitlistShows.length,
-                itemBuilder: (context, index) {
-                  final show = waitlistShows[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(show["title"]!, style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(show["introduction"]!, style: TextStyle(fontSize: 14)),
-                          Text("📅 ${show["date"]} | ⏰ ${show["time"]}", style: TextStyle(color: Colors.grey)),
-                          Text("Status: ${show["status"]}", style: TextStyle(color: Colors.orange)),
-                        ],
-                      ),
-                      isThreeLine: true,
-                    ),
-                  );
-                },
-              ),
-            ),
-            Divider(),
-
-            // Available Section
-            Text("Available", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                itemCount: availableShows.length,
-                itemBuilder: (context, index) {
-                  final show = availableShows[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(show["title"]!, style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(show["introduction"]!, style: TextStyle(fontSize: 14)),
-                          Text("📅 ${show["date"]} | ⏰ ${show["time"]}", style: TextStyle(color: Colors.grey)),
-                          Text("Status: ${show["status"]}", style: TextStyle(color: Colors.green)),
-                        ],
-                      ),
-                      isThreeLine: true,
-                    ),
-                  );
-                },
-              ),
-            ),
+            _buildSection("Waitlist", waitlistShows, Colors.orange),
+            const Divider(),
+            _buildSection("Available", availableShows, Colors.green),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSection(String title, List<Map<String, dynamic>> shows, Color statusColor) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Expanded(
+            child: ListView.builder(
+              itemCount: shows.length,
+              itemBuilder: (context, index) {
+                final show = shows[index];
+                return Card(
+                  child: ListTile(
+                    title: Text(show["title"], style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(show["introduction"], style: const TextStyle(fontSize: 14)),
+                        Text("📅 ${show["date"]} | ⏰ ${show["time"]}", style: const TextStyle(color: Colors.grey)),
+                        Text("Status: ${show["status"]}", style: TextStyle(color: statusColor)),
+                      ],
+                    ),
+                    isThreeLine: true,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
