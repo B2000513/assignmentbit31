@@ -113,16 +113,50 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
-  // ✅ Process Payment & Update Available Seats
   void _processPayment(BuildContext context) async {
-    final url = Uri.parse('http://192.168.1.6/event_management/api/update_seat.php');
+    final url = Uri.parse('http://192.168.1.6/event_management/api/process_payment.php');
 
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
+        "user_id": 1, // Replace with the actual logged-in user ID
         "event_id": eventId,
-        "seats_booked": seatsBooked, // If your API only needs seat count
+        "total_price": totalPrice,
+        "seats": seatItems.map((seat) => seat["seat_id"]).toList(), // List of seat IDs
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      if (responseData["status"] == "success") {
+        // ✅ Call create ticket function after successful payment
+        await _createTicket(context, responseData["payment_id"]);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(responseData["message"])),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Payment failed. Please try again.")),
+      );
+    }
+  }
+
+  /// ✅ Function to Create Ticket After Successful Payment
+  Future<void> _createTicket(BuildContext context, String paymentId) async {
+    final url = Uri.parse('http://192.168.1.6/event_management/api/create_ticket.php');
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "user_id": 1, // Replace with actual logged-in user ID
+        "event_id": eventId,
+        "seats": seatItems.map((seat) => seat["seat_id"]).toList(), // List of seat IDs
+        "price_paid": totalPrice,
+        "payment_id": paymentId, // Track payment ID for reporting
       }),
     );
 
@@ -130,9 +164,9 @@ class PaymentScreen extends StatelessWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text("Payment Successful"),
+          title: const Text("Ticket Confirmed"),
           content: Text(
-            "Your payment of \$${totalPrice.toStringAsFixed(2)} has been processed. Seats updated!",
+            "Your ticket has been created successfully!\nTotal Paid: \$${totalPrice.toStringAsFixed(2)}",
           ),
           actions: [
             TextButton(
@@ -147,7 +181,7 @@ class PaymentScreen extends StatelessWidget {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to update seats. Please try again.")),
+        const SnackBar(content: Text("Failed to create ticket. Please try again.")),
       );
     }
   }
