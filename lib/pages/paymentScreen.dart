@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class PaymentScreen extends StatelessWidget {
+class PaymentScreen extends StatefulWidget {
   final int eventId;
   final List<Map<String, dynamic>> seatItems;
 
@@ -12,20 +13,39 @@ class PaymentScreen extends StatelessWidget {
     required this.seatItems,
   });
 
-  /// Dynamically compute totalPrice from seatItems
-  double get totalPrice {
-    double sum = 0.0;
-    for (var seat in seatItems) {
-      sum += (seat["price"] ?? 0.0) as double;
-    }
-    return sum;
+  @override
+  _PaymentScreenState createState() => _PaymentScreenState();
+}
+
+class _PaymentScreenState extends State<PaymentScreen> {
+  int? userId;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
   }
 
-  /// The number of seats booked is simply the length of seatItems
-  int get seatsBooked => seatItems.length;
+  Future<void> _loadUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userId = prefs.getInt("user_id");
+      isLoading = false;
+    });
+  }
+
+  double get totalPrice =>
+      widget.seatItems.fold(0.0, (sum, seat) => sum + (seat["price"] ?? 0.0));
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text("Checkout"), centerTitle: true),
       body: Padding(
@@ -33,60 +53,18 @@ class PaymentScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Order Summary Card
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Order Summary",
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const Divider(),
-
-                    // List each seat & price
-                    for (var seat in seatItems) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("Seat ${seat["seatLabel"]}"),
-                          Text("\$${(seat["price"] ?? 0.0).toStringAsFixed(2)}"),
-                        ],
-                      ),
-                    ],
-
-                    const SizedBox(height: 10),
-                    // Display total
-                    Text(
-                      "Total Amount: \$${totalPrice.toStringAsFixed(2)}",
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
+            _buildOrderSummary(),
             const SizedBox(height: 30),
-
-            // Payment Methods
             const Text("Select Payment Method",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-
-            _buildPaymentButton(context, Icons.payment, "Pay with PayPal", Colors.blue[800],
-                    () => _processPayment(context)),
-            const SizedBox(height: 10),
-            _buildPaymentButton(context, Icons.credit_card, "Pay with Credit Card", Colors.grey[700],
-                    () => _showCreditCardDialog(context)),
-
+            _buildPaymentButton(Icons.payment, "Confirm Payment",
+                Colors.blue[800], _processPayment),
             const Spacer(),
-
-            // Cancel Button
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel", style: TextStyle(fontSize: 16, color: Colors.red)),
+              child: const Text("Cancel",
+                  style: TextStyle(fontSize: 16, color: Colors.red)),
             ),
           ],
         ),
@@ -94,7 +72,39 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPaymentButton(BuildContext context, IconData icon, String text, Color? color, VoidCallback onPressed) {
+  Widget _buildOrderSummary() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Order Summary",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Divider(),
+            ...widget.seatItems.map((seat) => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Seat ${seat["seatLabel"]}"),
+                Text("\$${(seat["price"] ?? 0.0).toStringAsFixed(2)}"),
+              ],
+            )),
+            const SizedBox(height: 10),
+            Text(
+              "Total: \$${totalPrice.toStringAsFixed(2)}",
+              style: const TextStyle(
+                  fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentButton(
+      IconData icon, String text, Color? color, VoidCallback onPressed) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
@@ -113,103 +123,103 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
-  void _processPayment(BuildContext context) async {
-    final url = Uri.parse('http://192.168.1.6/event_management/api/process_payment.php');
+  void _processPayment() async {
+    if (userId == null) {
+      _showSnackBar("User ID not found. Please log in again.");
+      return;
+    }
 
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "user_id": 1, // Replace with the actual logged-in user ID
-        "event_id": eventId,
-        "total_price": totalPrice,
-        "seats": seatItems.map((seat) => seat["seat_id"]).toList(), // List of seat IDs
-      }),
-    );
+    List<int> validSeats = widget.seatItems
+        .where((seat) => seat.containsKey("id") && seat["id"] != null)
+        .map((seat) => seat["id"] as int)
+        .toList();
 
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      if (responseData["status"] == "success") {
-        // ✅ Call create ticket function after successful payment
-        await _createTicket(context, responseData["payment_id"]);
+    if (validSeats.isEmpty) {
+      _showSnackBar("No valid seats selected.");
+      return;
+    }
+
+    final requestBody = jsonEncode({
+      "user_id": userId,
+      "event_id": widget.eventId,
+      "amount_paid": totalPrice,  // Match PHP field
+      "seats": validSeats,
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://192.168.1.6/event_management/api/process_payment.php'),
+        headers: {"Content-Type": "application/json"},
+        body: requestBody,
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData["success"] == true) {
+          String paymentId = responseData["payment_id"]; // Extract payment ID
+          await _createTicket(paymentId, validSeats);
+        } else {
+          _showSnackBar(responseData["message"] ?? "Payment failed.");
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData["message"])),
-        );
+        _showSnackBar("Payment failed. Please try again.");
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Payment failed. Please try again.")),
-      );
+    } catch (e) {
+      _showSnackBar("An error occurred. Please check your connection and try again.");
     }
   }
 
-  /// ✅ Function to Create Ticket After Successful Payment
-  Future<void> _createTicket(BuildContext context, String paymentId) async {
-    final url = Uri.parse('http://192.168.1.6/event_management/api/create_ticket.php');
 
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "user_id": 1, // Replace with actual logged-in user ID
-        "event_id": eventId,
-        "seats": seatItems.map((seat) => seat["seat_id"]).toList(), // List of seat IDs
-        "price_paid": totalPrice,
-        "payment_id": paymentId, // Track payment ID for reporting
-      }),
-    );
+  Future<void> _createTicket(String paymentId, List<int> seatIds) async {
+    final ticketData = jsonEncode({
+      "user_id": userId,
+      "event_id": widget.eventId,
+      "price_paid": totalPrice,
+      "seats": seatIds,
+      "payment_id": paymentId, // Include payment ID
+    });
 
-    if (response.statusCode == 200) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Ticket Confirmed"),
-          content: Text(
-            "Your ticket has been created successfully!\nTotal Paid: \$${totalPrice.toStringAsFixed(2)}",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-              child: const Text("OK"),
-            ),
-          ],
-        ),
+    try {
+      final ticketResponse = await http.post(
+        Uri.parse('http://192.168.1.6/event_management/api/create_ticket.php'),
+        headers: {"Content-Type": "application/json"},
+        body: ticketData,
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to create ticket. Please try again.")),
-      );
+
+      if (ticketResponse.statusCode == 200) {
+        final ticketResponseData = jsonDecode(ticketResponse.body);
+
+        if (ticketResponseData["status"] == "success") {
+          _showSuccessDialog(paymentId);
+        } else {
+          _showSnackBar(ticketResponseData["message"] ?? "Ticket creation failed.");
+        }
+      } else {
+        _showSnackBar("Ticket creation failed. Please try again.");
+      }
+    } catch (e) {
+      _showSnackBar("An error occurred while creating the ticket.");
     }
   }
 
-  void _showCreditCardDialog(BuildContext context) {
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _showSuccessDialog(String paymentId) async {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Credit Card Payment"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Enter your credit card details."),
-            const SizedBox(height: 10),
-            TextField(decoration: const InputDecoration(labelText: "Card Number"), keyboardType: TextInputType.number),
-            TextField(decoration: const InputDecoration(labelText: "Expiry Date"), keyboardType: TextInputType.datetime),
-            TextField(decoration: const InputDecoration(labelText: "CVV"), keyboardType: TextInputType.number),
-          ],
-        ),
+        title: const Text("Success"),
+        content: Text("Payment successful!\nPayment ID: $paymentId\nTotal: \$${totalPrice.toStringAsFixed(2)}"),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          ElevatedButton(
+          TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _processPayment(context); // Reuse the same logic after CC payment
+              Navigator.pushNamedAndRemoveUntil(context, '/bookingMainScreen', (route) => false);
             },
-            child: const Text("Submit"),
+            child: const Text("OK"),
           ),
         ],
       ),

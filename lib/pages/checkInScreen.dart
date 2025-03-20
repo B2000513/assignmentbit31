@@ -26,18 +26,26 @@ class _CheckInScreenState extends State<CheckInScreen> {
   /// Fetch ticket details from backend
   Future<void> fetchTicketDetails() async {
     final url = Uri.parse("http://192.168.1.6/event_management/api/get_ticket.php?ticket_id=${widget.ticketId}");
+    print("Request URL: $url");
 
     try {
       final response = await http.get(url);
+      print("API Response: ${response.body}");  // DEBUGGING LIN
       if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print("Decoded Data: $data");
+        if (data.containsKey("error")) {
+          throw Exception("Ticket not found");
+        }
         setState(() {
-          ticketDetails = json.decode(response.body);
+          ticketDetails = data;
           isLoading = false;
         });
       } else {
         throw Exception("Failed to load ticket details");
       }
     } catch (e) {
+      print("Error: $e");
       setState(() {
         isError = true;
         isLoading = false;
@@ -45,11 +53,17 @@ class _CheckInScreenState extends State<CheckInScreen> {
     }
   }
 
+  /// Convert Column Number to Letter (A-Z) and Combine with Row Number
+  String formatSeat(int row, int col) {
+    String columnLetter = String.fromCharCode(65 + col - 1); // A-Z for columns
+    return "$columnLetter$row"; // Example: B3, D5
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Your Event Ticket")),
-      body: Center( // ✅ Center the entire content
+      body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: isLoading
@@ -57,23 +71,28 @@ class _CheckInScreenState extends State<CheckInScreen> {
               : isError || ticketDetails == null
               ? const Text("Failed to load ticket details")
               : Column(
-            mainAxisSize: MainAxisSize.min, // ✅ Minimize extra spacing
-            crossAxisAlignment: CrossAxisAlignment.center, // ✅ Center align text
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 ticketDetails!['event_name'] ?? "Unknown Event",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
-                "Seat: ${ticketDetails!['seat_id']}",
+                "Time: ${ticketDetails!['event_time']}",
                 style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
+              const SizedBox(height: 8),
+              Text(
+                "Seat: ${formatSeat(ticketDetails!['row_number'], ticketDetails!['col_number'])}",
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 20),
-              _buildQrCode(widget.ticketId.toString()), // ✅ Ensure QR is centered
+              _buildQrCode(ticketDetails!['ticket_code']),
               const SizedBox(height: 20),
               Text(
-                "Ticket ID: ${widget.ticketId}",
+                "Ticket ID: ${ticketDetails!['id']}",
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
             ],
@@ -82,7 +101,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
       ),
     );
   }
-
 
   /// Widget to Generate QR Code
   Widget _buildQrCode(String data) {

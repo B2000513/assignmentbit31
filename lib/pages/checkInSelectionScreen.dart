@@ -22,6 +22,26 @@ class _CheckInSelectionScreenState extends State<CheckInSelectionScreen> {
     futureEvents = fetchUserEvents(widget.userId);
   }
 
+  Future<int> fetchUserTicketId(int userId, int eventId) async {
+    final url = Uri.parse("http://192.168.1.6/event_management/api/get_ticket_id.php?user_id=$userId&event_id=$eventId");
+
+    try {
+      final response = await http.get(url);
+      debugPrint("API Response: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data.containsKey("ticket_id")) {
+          return data["ticket_id"];
+        }
+      }
+      return 0; // Return 0 if ticket not found
+    } catch (e) {
+      debugPrint("API Error: $e");
+      return 0;
+    }
+  }
+
   Future<List<Event>> fetchUserEvents(int userId) async {
     final url = Uri.parse("http://192.168.1.6/event_management/api/get_user_event.php?user_id=$userId");
 
@@ -107,13 +127,21 @@ class _CheckInSelectionScreenState extends State<CheckInSelectionScreen> {
                   trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.blue[600]),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   tileColor: Colors.white,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CheckInScreen(ticketId: event.id),
-                      ),
-                    );
+                  onTap: () async {
+                    int ticketId = await fetchUserTicketId(widget.userId, event.id); // ✅ Fetch the correct ticket
+
+                    if (ticketId != 0) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CheckInScreen(ticketId: ticketId),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Ticket not found!")),
+                      );
+                    }
                   },
                 );
               },

@@ -29,26 +29,36 @@ class _SidebarWidgetState extends State<SidebarWidget> {
   Future<void> _loadUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    // Retrieve user_id as an integer, handling both int and string formats
+    // Debug: Print all keys stored in SharedPreferences
+    debugPrint("SharedPreferences Keys: ${prefs.getKeys()}");
+
+    // Debug: Print stored user_id value
+    debugPrint("Stored user_id: ${prefs.get("user_id")}");
+
     int? storedUserId;
 
     if (prefs.containsKey("user_id")) {
       try {
-        dynamic userIdValue = prefs.get("user_id"); // Get user_id without assuming type
+        dynamic userIdValue = prefs.get("user_id");
 
         if (userIdValue is int) {
           storedUserId = userIdValue;
         } else if (userIdValue is String) {
-          storedUserId = int.tryParse(userIdValue); // Convert string to int safely
+          storedUserId = int.tryParse(userIdValue);
+        }
+
+        if (storedUserId == null) {
+          debugPrint("Error: user_id exists but has invalid format.");
         }
       } catch (e) {
         debugPrint("Error parsing user_id: $e");
         storedUserId = null;
       }
+    } else {
+      debugPrint("Error: user_id key does not exist in SharedPreferences.");
     }
 
     if (storedUserId == null) {
-      debugPrint("Error: User ID not found or invalid format in SharedPreferences");
       setState(() => isLoading = false);
       return;
     }
