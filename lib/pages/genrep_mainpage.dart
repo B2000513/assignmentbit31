@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../pages/genrep_report.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'genrep_report.dart';
 
 class GenRepMainPage extends StatefulWidget {
   const GenRepMainPage({super.key});
 
   @override
-  _GenerateReportMainPageState createState() => _GenerateReportMainPageState();
+  _GenRepMainPageState createState() => _GenRepMainPageState();
 }
 
-class _GenerateReportMainPageState extends State<GenRepMainPage> {
-  String selectedReportType = "Ticket Sales"; // Default report type
-  String selectedTimeframe = "Daily"; // Default timeframe
+class _GenRepMainPageState extends State<GenRepMainPage> {
+  String selectedReportType = "Ticket Sales";
+  String selectedTimeframe = "Daily";
   DateTime? startDate;
   DateTime? endDate;
   DateTime? selectedMonth;
+  bool isLoading = false;
 
-  // Function to show the date picker for Daily reports
   Future<void> _selectDate(BuildContext context) async {
     DateTime? picked = await showDatePicker(
       context: context,
@@ -27,12 +29,11 @@ class _GenerateReportMainPageState extends State<GenRepMainPage> {
     if (picked != null) {
       setState(() {
         startDate = picked;
-        endDate = picked; // For daily reports, start and end date are the same
+        endDate = picked;
       });
     }
   }
 
-  // Function to show the date range picker for Weekly reports
   Future<void> _selectWeek(BuildContext context) async {
     DateTime? pickedStart = await showDatePicker(
       context: context,
@@ -45,7 +46,7 @@ class _GenerateReportMainPageState extends State<GenRepMainPage> {
         context: context,
         initialDate: pickedStart,
         firstDate: pickedStart,
-        lastDate: pickedStart.add(Duration(days: 6)), // Limit to 7 days max
+        lastDate: pickedStart.add(const Duration(days: 6)),
       );
       if (pickedEnd != null) {
         setState(() {
@@ -56,32 +57,38 @@ class _GenerateReportMainPageState extends State<GenRepMainPage> {
     }
   }
 
-  // Function to show month picker (only year and month)
   Future<void> _selectMonth(BuildContext context) async {
     DateTime now = DateTime.now();
-    DateTime initialDate = selectedMonth ?? now;
-
-    DateTime? picked = await showDatePicker(
+    showModalBottomSheet(
       context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2000),
-      lastDate: now,
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light(),
-          child: child!,
+      builder: (BuildContext context) {
+        return SizedBox(
+          height: 250,
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: 12,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(DateFormat('MMMM').format(DateTime(now.year, index + 1))),
+                      onTap: () {
+                        setState(() {
+                          selectedMonth = DateTime(now.year, index + 1);
+                        });
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
-
-    if (picked != null) {
-      setState(() {
-        selectedMonth = DateTime(picked.year, picked.month);
-      });
-    }
   }
 
-  // Display selected date
   String getSelectedDateText() {
     if (selectedTimeframe == "Daily" && startDate != null) {
       return DateFormat("yyyy-MM-dd").format(startDate!);
@@ -93,16 +100,90 @@ class _GenerateReportMainPageState extends State<GenRepMainPage> {
     return "No date selected";
   }
 
+  Future<void> _fetchReportData() async {
+    if (selectedReportType.isEmpty || selectedTimeframe.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a report type and timeframe")),
+      );
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    String apiUrl = "http://192.168.1.6/event_management/api/fetch_report.php";
+    Map<String, String> params = {
+      "reportType": selectedReportType,
+      "timeframe": selectedTimeframe,
+    };
+
+    if (selectedTimeframe == "Daily" && startDate != null) {
+      params["startDate"] = DateFormat("yyyy-MM-dd").format(startDate!);
+    } else if (selectedTimeframe == "Weekly" && startDate != null && endDate != null) {
+      params["startDate"] = DateFormat("yyyy-MM-dd").format(startDate!);
+      params["endDate"] = DateFormat("yyyy-MM-dd").format(endDate!);
+    } else if (selectedTimeframe == "Monthly" && selectedMonth != null) {
+      params["selectedMonth"] = DateFormat("yyyy-MM").format(selectedMonth!);
+    }
+
+    try {
+      final response = await http.post(Uri.parse(apiUrl), body: params);
+
+      if (response.statusCode != 200) {
+        throw Exception("Failed to fetch report data: ${response.body}");
+      }
+
+      final List<dynamic> data = jsonDecode(response.body);
+      if (data.isEmpty) {
+        throw Exception("No data available");
+      }
+
+      // ✅ Safe number parsing to avoid FormatException
+      List<String> showNames = [];
+      List<int> ticketSales = [];
+      List<int> revenue = [];
+
+      for (var event in data) {
+        showNames.add(event['event_name'].toString());
+
+        int tickets = int.tryParse(event['ticket_sales'].toString()) ?? 0;
+        int rev = int.tryParse(event['revenue'].toString()) ?? 0;
+
+        ticketSales.add(tickets);
+        revenue.add(rev);
+      }
+
+      // ✅ Navigate to `GenMainReport` with the parsed data
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => GenMainReport(
+
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Generate Report")),
+      appBar: AppBar(title: const Text("Generate Report")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Select Report Type", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text("Select Report Type", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButton<String>(
               value: selectedReportType,
               isExpanded: true,
@@ -112,33 +193,9 @@ class _GenerateReportMainPageState extends State<GenRepMainPage> {
                   child: Text(report),
                 );
               }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedReportType = value!;
-                });
-              },
+              onChanged: (value) => setState(() => selectedReportType = value!),
             ),
-            SizedBox(height: 20),
-            Text("Select Timeframe", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            DropdownButton<String>(
-              value: selectedTimeframe,
-              isExpanded: true,
-              items: ["Daily", "Weekly", "Monthly"].map((String timeframe) {
-                return DropdownMenuItem<String>(
-                  value: timeframe,
-                  child: Text(timeframe),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedTimeframe = value!;
-                  startDate = null;
-                  endDate = null;
-                  selectedMonth = null;
-                });
-              },
-            ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 if (selectedTimeframe == "Daily") {
@@ -149,43 +206,15 @@ class _GenerateReportMainPageState extends State<GenRepMainPage> {
                   _selectMonth(context);
                 }
               },
-              child: Text("Select Date"),
+              child: const Text("Select Date"),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text("Selected Date: ${getSelectedDateText()}"),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             Center(
               child: ElevatedButton(
-                onPressed: () {
-                  if (selectedReportType.isEmpty || selectedTimeframe.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Please select a report type and timeframe")),
-                    );
-                    return;
-                  }
-
-                  // Dummy data for now
-                  List<String> showNames = ["Show A", "Show B", "Show C"];
-                  List<int> ticketSales = [120, 95, 150];
-                  List<int> revenue = [12000, 9500, 15000];
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => GenRepReportPage(
-                        reportType: selectedReportType,
-                        timeframe: selectedTimeframe,
-                        startDate: startDate,
-                        endDate: endDate,
-                        selectedMonth: selectedMonth,
-                        showNames: showNames,
-                        ticketSales: ticketSales,
-                        revenue: revenue,
-                      ),
-                    ),
-                  );
-                },
-                child: const Text("Generate Report"),
+                onPressed: isLoading ? null : _fetchReportData,
+                child: isLoading ? const CircularProgressIndicator() : const Text("Generate Report"),
               ),
             ),
           ],
