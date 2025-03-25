@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class WaitlistPage extends StatelessWidget {
   final List<Map<String, String>> waitlistShows = [
@@ -52,14 +53,14 @@ class WaitlistPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Waitlist")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.waitlist)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Waitlist Section
-            Text("Waitlist", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.waitlist, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
@@ -74,7 +75,11 @@ class WaitlistPage extends StatelessWidget {
                         children: [
                           Text(show["introduction"]!, style: TextStyle(fontSize: 14)),
                           Text("📅 ${show["date"]} | ⏰ ${show["time"]}", style: TextStyle(color: Colors.grey)),
-                          Text("Status: ${show["status"]}", style: TextStyle(color: Colors.orange)),
+                          Text(
+                            "${AppLocalizations.of(context)!.status}: ${show["status"]}",
+                            style: TextStyle(color: Colors.orange),
+                          ),
+
                         ],
                       ),
                       isThreeLine: true,
@@ -86,7 +91,7 @@ class WaitlistPage extends StatelessWidget {
             Divider(),
 
             // Available Section
-            Text("Available", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.available, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
@@ -101,7 +106,11 @@ class WaitlistPage extends StatelessWidget {
                         children: [
                           Text(show["introduction"]!, style: TextStyle(fontSize: 14)),
                           Text("📅 ${show["date"]} | ⏰ ${show["time"]}", style: TextStyle(color: Colors.grey)),
-                          Text("Status: ${show["status"]}", style: TextStyle(color: Colors.green)),
+                          Text(
+                            "${AppLocalizations.of(context)!.status}: ${show["status"]}",
+                            style: TextStyle(color: Colors.green),
+                          ),
+
                         ],
                       ),
                       isThreeLine: true,

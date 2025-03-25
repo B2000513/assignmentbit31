@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CheckInScreen extends StatelessWidget {
   final String ticketId; // Ticket ID (Unique)
@@ -9,13 +10,13 @@ class CheckInScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Your Event Ticket")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.your_event_ticket)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "Show this QR code at entry",
+             Text(
+              AppLocalizations.of(context)!.show_qr,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
@@ -28,7 +29,10 @@ class CheckInScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
-            Text("Ticket ID: $ticketId", style: const TextStyle(fontSize: 16)),
+            Text(
+              "${AppLocalizations.of(context)!.ticket_id} $ticketId",
+              style: TextStyle(fontSize: 16),
+            ),
           ],
         ),
       ),

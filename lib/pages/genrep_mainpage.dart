@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../pages/genrep_report.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class GenRepMainPage extends StatefulWidget {
   @override
@@ -94,13 +95,13 @@ class _GenerateReportMainPageState extends State<GenRepMainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Generate Report")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.gen_rep)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Select Report Type", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.select_rep_type, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButton<String>(
               value: selectedReportType,
               isExpanded: true,
@@ -117,7 +118,7 @@ class _GenerateReportMainPageState extends State<GenRepMainPage> {
               },
             ),
             SizedBox(height: 20),
-            Text("Select Timeframe", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.select_timeframe, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButton<String>(
               value: selectedTimeframe,
               isExpanded: true,
@@ -147,17 +148,21 @@ class _GenerateReportMainPageState extends State<GenRepMainPage> {
                   _selectMonth(context);
                 }
               },
-              child: Text("Select Date"),
+              child: Text(AppLocalizations.of(context)!.select_date),
             ),
             SizedBox(height: 10),
-            Text("Selected Date: ${getSelectedDateText()}"),
+            Text(
+              "${AppLocalizations.of(context)!.selected_date} ${getSelectedDateText()}",
+              style: TextStyle(fontSize: 16),
+            ),
             SizedBox(height: 30),
+
             Center(
               child: ElevatedButton(
                 onPressed: () {
                   if (selectedReportType.isEmpty || selectedTimeframe.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Please select a report type and timeframe")),
+                      SnackBar(content: Text(AppLocalizations.of(context)!.please_select_rep_type)),
                     );
                     return;
                   }
@@ -183,7 +188,7 @@ class _GenerateReportMainPageState extends State<GenRepMainPage> {
                     ),
                   );
                 },
-                child: const Text("Generate Report"),
+                child: Text(AppLocalizations.of(context)!.gen_rep),
               ),
             ),
           ],

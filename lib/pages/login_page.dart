@@ -1,50 +1,57 @@
 import 'package:flutter/material.dart';
 import 'signupuser_page.dart';
-import 'home_screen.dart'; // Import the new Home Screen
+import 'home_screen.dart'; // Import Home Screen
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LoginPage extends StatelessWidget {
+
+  final Function(Locale) setLocale; // ✅ Accept setLocales
+
+  const LoginPage({Key? key, required this.setLocale}) : super(key: key); // ✅ Require setLocale
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Login")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.login)), // Use localized text
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // 🚀 Welcome Message
             Text(
-              "Welcome to HELP EMS",
-              style: TextStyle(
+              AppLocalizations.of(context)!.welcomeMessage, // Localized text
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.blueAccent,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 20), // Space between title and input fields
+            const SizedBox(height: 20), // Space between title and input fields
 
             TextField(
-              decoration: InputDecoration(labelText: "Email"),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.email),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             TextField(
-              decoration: InputDecoration(labelText: "Password"),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.password),
               obscureText: true,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             ElevatedButton(
               onPressed: () {
                 // Navigate to Home Screen after login
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => HomeScreen()),
+                  MaterialPageRoute(builder: (context) => HomeScreen(setLocale: setLocale)
+                  ),
                 );
               },
-              child: Text("Login"),
+              child: Text(AppLocalizations.of(context)!.login), // Localized text
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
             TextButton(
               onPressed: () {
@@ -54,7 +61,7 @@ class LoginPage extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => SignUpUserPage()),
                 );
               },
-              child: Text("Don't have an account? Sign Up"),
+              child: Text(AppLocalizations.of(context)!.signupPrompt), // Localized text
             ),
           ],
         ),

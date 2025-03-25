@@ -6,13 +6,22 @@ import 'admin_profile_page.dart';
 import '../pages/waitlist_page.dart'; // Import Waitlist Page
 import 'CheckInSelectionScreen.dart';
 import 'add_show.dart'; // Import Add Show Page ✅
+import '../pages/settings_page.dart'; // ✅ Import Settings Page
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // ✅ Import AppLocalizations
+import '../main.dart'; // ✅ Import LocaleProvider
+
 
 class HomeScreen extends StatelessWidget {
+
+  final Function(Locale) setLocale; // ✅ Add setLocale parameter
+
+  const HomeScreen({Key? key, required this.setLocale}) : super(key: key); // ✅ Require setLocale
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Welcome to HELP EMS App"),
+        title: Text(AppLocalizations.of(context)!.welcomeMessage),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -28,8 +37,8 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "Welcome to HELP EMS App",
+            Text(
+              AppLocalizations.of(context)!.welcomeMessage,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
@@ -38,20 +47,21 @@ class HomeScreen extends StatelessWidget {
                 // Navigate to BookingMainScreen when button is clicked
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => BookingMainScreen()),
+                  MaterialPageRoute(builder: (context) => BookingMainScreen(setLocale: setLocale)
+                  ),
                 );
               },
-              child: const Text("Book a Show"),
+              child: Text(AppLocalizations.of(context)!.bookShow), // ✅ Use localized text
             ),
             SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AdminProfilePage()),
+                  MaterialPageRoute(builder: (context) => AdminProfilePage(setLocale: setLocale)),
                 );
               },
-              child: Text("Admin Profile"),
+              child: Text(AppLocalizations.of(context)!.adminProfile), // ✅ Use localized text
             ),
             SizedBox(height: 10), // ✅ Add some spacing
             ElevatedButton(
@@ -62,7 +72,7 @@ class HomeScreen extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => AddShowPage()),
                 );
               },
-              child: Text("Add New Show"), // ✅ "Add Show" Button
+              child: Text(AppLocalizations.of(context)!.addNewShow), // ✅ Use localized text
             ),
           ],
         ),
@@ -76,21 +86,24 @@ class HomeScreen extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
+           DrawerHeader(
             decoration: BoxDecoration(color: Colors.blue),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(Icons.event, color: Colors.white, size: 50),
                 SizedBox(height: 10),
-                Text("Event Booking",
-                    style: TextStyle(color: Colors.white, fontSize: 20)),
+                Text(
+                  AppLocalizations.of(context)?.event_booking ?? "Event Booking",
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+
               ],
             ),
           ),
           ListTile(
             leading: const Icon(Icons.person),
-            title: const Text("Profile"),
+            title: Text(AppLocalizations.of(context)!.profile), // ✅ Use localized text
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -101,7 +114,7 @@ class HomeScreen extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.payment),
-            title: const Text("Payment"),
+            title: Text(AppLocalizations.of(context)!.payment), // ✅ Use localized text
             onTap: () {
               Navigator.pop(context);
               // TODO: Navigate to Payment Page
@@ -109,15 +122,19 @@ class HomeScreen extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.settings),
-            title: const Text("Settings"),
+            title: Text(AppLocalizations.of(context)!.settings), // ✅ Use localized text
             onTap: () {
               Navigator.pop(context);
-              // TODO: Navigate to Settings Page
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPage(setLocale: setLocale), // ✅ Navigate to Settings Page
+                ),
+              );
             },
           ),
           ListTile(
             leading: const Icon(Icons.list_alt),
-            title: const Text("Ticket"),
+            title: Text(AppLocalizations.of(context)!.ticket), // ✅ Use localized text
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -130,7 +147,7 @@ class HomeScreen extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.hourglass_bottom), // ⏳ Waitlist Icon
-            title: const Text("Waitlist"),
+            title: Text(AppLocalizations.of(context)!.waitlist), // ✅ Use localized text
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -143,12 +160,12 @@ class HomeScreen extends StatelessWidget {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout),
-            title: const Text("Logout"),
+            title: Text(AppLocalizations.of(context)!.logout), // ✅ Use localized text
             onTap: () {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => LoginPage(setLocale: setLocale)),
               );
             },
           ),

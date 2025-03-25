@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:assignmentbit31/models/events.dart';
 import 'paymentScreen.dart';
 import '../models/seats.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 
 class SeatSelectionScreen extends StatefulWidget {
@@ -78,7 +79,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   void proceedToPayment() async {
     if (selectedSeats.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select at least one seat!")),
+         SnackBar(content: Text(AppLocalizations.of(context)!.please_select_one_seat)),
       );
       return;
     }
@@ -102,7 +103,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Seats successfully booked!")),
+        SnackBar(content: Text(AppLocalizations.of(context)!.seat_suc_booked)),
       );
     }
   }
@@ -110,15 +111,21 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Select Seats - ${widget.event.title}")),
+      appBar: AppBar(
+        title: Text("${AppLocalizations.of(context)!.select_seats} - ${widget.event.title}"),
+      ),
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text("Select Your Seats",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              AppLocalizations.of(context)!.select_your_seats,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
+
 
             Expanded(
               child: SingleChildScrollView(
@@ -185,10 +192,11 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
             if (selectedSeats.isNotEmpty)
               Column(
                 children: [
-                  const Text(
-                    "Selected Seats:",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  Text(
+                    AppLocalizations.of(context)!.selected_seats,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
+
                   Text(
                     selectedSeats.join(", "),
                     style: const TextStyle(fontSize: 16, color: Colors.blue),
@@ -213,7 +221,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               child: TextField(
                 controller: promoController,
                 decoration: InputDecoration(
-                  hintText: "Enter Promo Code",
+                  hintText:
+                    AppLocalizations.of(context)!.enter_promo_code,
                   border: InputBorder.none,
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.check, color: Colors.blue),
@@ -226,11 +235,16 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
             const SizedBox(height: 10),
 
             if (isValidPromo)
-              Text(
-                "Promo Applied: ${discount * 100}% off!",
-                style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "${AppLocalizations.of(context)!.promo_applied} ${discount * 100}% off!",
+                    style: const TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                ],
               ),
-            const SizedBox(height: 10),
 
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -238,11 +252,11 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                 color: Colors.blue[50],
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                "Total Price: \$${totalPrice.toStringAsFixed(2)}",
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-            ),
+    child: Text(
+    "${AppLocalizations.of(context)!.total_price} \$${totalPrice.toStringAsFixed(2)}",
+    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    ),
+    ),
             const SizedBox(height: 15),
 
             ElevatedButton(
@@ -252,8 +266,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                 backgroundColor: Colors.blue,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text(
-                "Proceed to Payment",
+              child: Text(AppLocalizations.of(context)!.proceed_to_payemnt,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),

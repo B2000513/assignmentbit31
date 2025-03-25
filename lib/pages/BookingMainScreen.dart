@@ -3,19 +3,25 @@ import 'package:flutter/material.dart';
 import '../models/events.dart'; // Import Event model
 import '../pages/eventDetailPage.dart';
 import 'seatSelection.dart';
-import 'waitlistScreen.dart'; // Import Waitlist Screen
+import 'waitListScreen.dart'; // Import Waitlist Screen
 import 'CheckInSelectionScreen.dart';
 import '../pages/user_profile_page.dart'; // Import UserProfilePage
 import '../pages/login_page.dart'; // Import LoginPage
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 
 
 class BookingMainScreen extends StatelessWidget {
-  const BookingMainScreen({super.key});
+
+  final Function(Locale) setLocale; // ✅ Accept setLocale
+
+  const BookingMainScreen({Key? key, required this.setLocale}) : super(key: key); // ✅ Require setLocale
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Book Your Event")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.book_your_event)),
       drawer: _buildSidebar(context), //   Sidebar (Drawer)
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -51,10 +57,13 @@ class BookingMainScreen extends StatelessWidget {
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Center(
+                          return Center(
                             child: Padding(
                               padding: EdgeInsets.all(20),
-                              child: Text("Image not available", style: TextStyle(color: Colors.red)),
+                              child: Text(
+                                AppLocalizations.of(context)!.image_not_ava,
+                                style: TextStyle(color: Colors.red),
+                              ),
                             ),
                           );
                         },
@@ -74,12 +83,13 @@ class BookingMainScreen extends StatelessWidget {
                           const SizedBox(height: 8),
 
                           Text(
-                            "Available Seats: ${event.availableSeats}",
+                            "${AppLocalizations.of(context)!.available_seats}: ${event.availableSeats}",
                             style: TextStyle(
                               fontSize: 16,
                               color: event.availableSeats > 0 ? Colors.green : Colors.red,
                             ),
                           ),
+
                           const SizedBox(height: 10),
 
                           if (event.availableSeats > 0)
@@ -93,7 +103,7 @@ class BookingMainScreen extends StatelessWidget {
                                   ),
                                 );
                               },
-                              child: const Text("Book Now"),
+                              child: Text(AppLocalizations.of(context)!.book_now),
                             )
                           else
                             ElevatedButton(
@@ -102,11 +112,11 @@ class BookingMainScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => WaitlistScreen(),
+                                    builder: (context) => WaitlistScreen(eventTitle: event.title),
                                   ),
                                 );
                               },
-                              child: const Text("Join Waitlist"),
+                              child: Text(AppLocalizations.of(context)!.join_waitlist),
                             ),
                         ],
                       ),
@@ -131,16 +141,16 @@ class BookingMainScreen extends StatelessWidget {
             decoration: BoxDecoration(color: Colors.blue),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children:  [
                 Icon(Icons.event, color: Colors.white, size: 50),
                 SizedBox(height: 10),
-                Text("Event Booking", style: TextStyle(color: Colors.white, fontSize: 20)),
+                Text(AppLocalizations.of(context)!.event_booking, style: TextStyle(color: Colors.white, fontSize: 20)),
               ],
             ),
           ),
           ListTile(
             leading: const Icon(Icons.person),
-            title: const Text("Profile"),
+            title:  Text(AppLocalizations.of(context)!.profile),
             onTap: () {
               Navigator.pop(context); // Close drawer
               // TODO: Navigate to Profile Page
@@ -152,7 +162,7 @@ class BookingMainScreen extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.payment),
-            title: const Text("Payment"),
+            title: Text(AppLocalizations.of(context)!.payment),
             onTap: () {
               Navigator.pop(context);
               // TODO: Navigate to Payment Page
@@ -160,7 +170,7 @@ class BookingMainScreen extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.settings),
-            title: const Text("Settings"),
+            title: Text(AppLocalizations.of(context)!.settings),
             onTap: () {
               Navigator.pop(context);
               // TODO: Navigate to Settings Page
@@ -168,7 +178,7 @@ class BookingMainScreen extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.list_alt),
-            title: const Text("Ticket"),
+            title:  Text(AppLocalizations.of(context)!.ticket),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -181,7 +191,7 @@ class BookingMainScreen extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.hourglass_bottom),
-            title: const Text("Waitlist"),
+            title: Text(AppLocalizations.of(context)!.waitlist),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -195,13 +205,13 @@ class BookingMainScreen extends StatelessWidget {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout),
-            title: const Text("Logout"),
+            title: Text(AppLocalizations.of(context)!.logout),
             onTap: () {
               Navigator.pop(context);
               // TODO: Handle logout
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => LoginPage(setLocale: setLocale)),
               );
             },
           ),

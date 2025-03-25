@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class GenRepReportPage extends StatelessWidget {
   final String reportType;
@@ -43,13 +44,17 @@ class GenRepReportPage extends StatelessWidget {
     double maxY = ([...ticketSales, ...revenue].reduce((a, b) => a > b ? a : b)) * 1.2;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Generated Report')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.gened_rep)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Report Type: $reportType', style: TextStyle(fontSize: 18)),
+            Text(
+              "${AppLocalizations.of(context)!.rep_type} $reportType",
+              style: TextStyle(fontSize: 18),
+            ),
+
             if (timeframe == 'Daily' || timeframe == 'Weekly')
               Text('Date Range: ${startDate?.toLocal()} - ${endDate?.toLocal()}', style: TextStyle(fontSize: 16)),
             if (timeframe == 'Monthly')
@@ -114,20 +119,31 @@ class GenRepReportPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Indicator(color: Colors.blue, text: 'Ticket Sales'),
+                Indicator(color: Colors.blue, text: AppLocalizations.of(context)!.ticket_sales),
                 SizedBox(width: 20),
-                Indicator(color: Colors.green, text: 'Revenue'),
+                Indicator(color: Colors.green, text: AppLocalizations.of(context)!.revenue),
               ],
             ),
             SizedBox(height: 30),
-            Text("Revenue Breakdown", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.rev_breakdown, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
-            Text("Total Ticket Sales: $totalTicketSales", style: TextStyle(fontSize: 16)),
-            Text("Total Revenue: \$${totalRevenue.toStringAsFixed(2)}", style: TextStyle(fontSize: 16)),
+            Text(
+              "${AppLocalizations.of(context)!.total_tic_sales} $totalTicketSales",
+              style: TextStyle(fontSize: 16),
+            ),
+            Text(
+              "${AppLocalizations.of(context)!.total_rev} \$${totalRevenue.toStringAsFixed(2)}",
+              style: TextStyle(fontSize: 16),
+            ),
             SizedBox(height: 10),
-            Text("Total Seat Occupancy: $totalTicketSales / $maxSeatOccupancy seats", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+
+            Text(
+              "${AppLocalizations.of(context)!.total_seat_occ} $totalTicketSales / $maxSeatOccupancy seats",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+
             SizedBox(height: 5),
-            Text("Occupancy Rate: ${(seatOccupancyPercentage * 100).toStringAsFixed(1)}%", style: TextStyle(fontSize: 16)),
+            Text("${AppLocalizations.of(context)!.occ_rate} ${(seatOccupancyPercentage * 100).toStringAsFixed(1)}%", style: TextStyle(fontSize: 16)),
             SizedBox(height: 5),
             LinearProgressIndicator(
               value: seatOccupancyPercentage,
@@ -141,7 +157,7 @@ class GenRepReportPage extends StatelessWidget {
             Center(
               child: ElevatedButton(
                 onPressed: () => _generatePDFReport(context),
-                child: Text("Generate PDF Report"),
+                child: Text(AppLocalizations.of(context)!.gen_pdf_report),
               ),
             ),
           ],
@@ -191,7 +207,7 @@ class GenRepReportPage extends StatelessWidget {
 
       // ✅ Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("PDF Saved at ${savedFile.path}")),
+        SnackBar(content: Text("${AppLocalizations.of(context)!.pdf_saved_at} ${savedFile.path}")),
       );
 
       // ✅ Open the saved PDF file

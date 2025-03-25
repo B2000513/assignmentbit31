@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class UserProfilePage extends StatefulWidget {
   @override
@@ -21,6 +22,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   @override
   void initState() {
     super.initState();
+    // Initialize controllers with existing user data
     nameController = TextEditingController(text: fullName);
     emailController = TextEditingController(text: email);
     phoneController = TextEditingController(text: phone);
@@ -49,25 +51,27 @@ class _UserProfilePageState extends State<UserProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("User Profile")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.user_profile)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            _buildTextField("Full Name", nameController, isEditing),
+            _buildTextField(AppLocalizations.of(context)!.full_name, nameController, isEditing),
             const SizedBox(height: 10),
-            _buildTextField("Email", emailController, isEditing),
+            _buildTextField(AppLocalizations.of(context)!.email, emailController, isEditing),
             const SizedBox(height: 10),
-            _buildTextField("Phone Number", phoneController, isEditing),
+            _buildTextField(AppLocalizations.of(context)!.phone_number, phoneController, isEditing),
             const SizedBox(height: 20),
 
             // Edit Credentials Button
             Center(
               child: ElevatedButton(
                 onPressed: toggleEdit,
-                child: Text(isEditing ? "Save Changes" : "Edit Credentials"),
+                child: Text(isEditing
+                    ? AppLocalizations.of(context)!.save_changes
+                    : AppLocalizations.of(context)!.edit_credentials),
               ),
             ),
           ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'checkInScreen.dart'; // Import the QR Ticket Page
 import '../models/events.dart'; // Import Event Model
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CheckInSelectionScreen extends StatelessWidget {
   const CheckInSelectionScreen({super.key});
@@ -9,7 +10,7 @@ class CheckInSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Select Your Event"),
+        title:  Text(AppLocalizations.of(context)!.select_your_event),
         centerTitle: true,
         elevation: 0,
       ),
@@ -28,7 +29,7 @@ class CheckInSelectionScreen extends StatelessWidget {
                 child: Image.asset('assets/concert.jpg', width: 60, height: 60, fit: BoxFit.cover),
               ),
               title: Text(event.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              subtitle: Text("Tap to check-in", style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+              subtitle: Text(AppLocalizations.of(context)!.tap_to_check_in, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
               trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[600]),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               tileColor: Colors.white,

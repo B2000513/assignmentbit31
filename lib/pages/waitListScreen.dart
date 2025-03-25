@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class WaitlistScreen extends StatefulWidget {
-  const WaitlistScreen({super.key});
+  final String eventTitle; // Accept event title to display in the waitlist screen
+
+  const WaitlistScreen ({super.key, required this.eventTitle});
 
   @override
   State<WaitlistScreen> createState() => _WaitlistScreenState();
@@ -15,7 +18,7 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Join Waitlist")),
+      appBar: AppBar(title: Text(widget.eventTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: isSubmitted
@@ -24,30 +27,30 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
           children: [
             const Icon(Icons.check_circle, color: Colors.green, size: 80),
             const SizedBox(height: 20),
-            const Text("You've been added to the waitlist!", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.you_been_added_to_the_waitlist, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            const Text("We'll notify you if tickets become available."),
+            Text(AppLocalizations.of(context)!.we_notify_you_if_tickets_become_available),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Back to Events"),
+              child:  Text(AppLocalizations.of(context)!.back_to_events),
             ),
           ],
         )
             : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("This event is sold out. Join the waitlist to be notified if tickets become available.",
+             Text(AppLocalizations.of(context)!.event_sold_out_mes,
                 style: TextStyle(fontSize: 16)),
             const SizedBox(height: 20),
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: "Name"),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.name),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _emailController,
-              decoration: const InputDecoration(labelText: "Email"),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.email),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 20),
@@ -58,7 +61,7 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
                     isSubmitted = true;
                   });
                 },
-                child: const Text("Join Waitlist"),
+                child: Text(AppLocalizations.of(context)!.join_waitlist),
               ),
             ),
           ],

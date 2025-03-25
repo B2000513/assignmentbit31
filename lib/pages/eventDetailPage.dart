@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/events.dart'; // Import Event model
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class EventDetailScreen extends StatelessWidget {
   final Event event;
@@ -25,7 +26,7 @@ class EventDetailScreen extends StatelessWidget {
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  return const Center(child: Text("Image not available"));
+                  return Center(child: Text(AppLocalizations.of(context)!.image_not_ava));
                 },
               )
                   : Image.asset(
@@ -34,7 +35,7 @@ class EventDetailScreen extends StatelessWidget {
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  return const Center(child: Text("Image not available"));
+                  return Center(child: Text(AppLocalizations.of(context)!.image_not_ava));
                 },
               ),
             ),
@@ -49,7 +50,7 @@ class EventDetailScreen extends StatelessWidget {
 
             // Event Description
             Text(
-              event.description ?? "No description available",
+              event.description ?? AppLocalizations.of(context)!.no_desc_ava,
               style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 10),
@@ -70,9 +71,10 @@ class EventDetailScreen extends StatelessWidget {
 
             // Available Seats
             Text(
-              "Available Seats: ${event.availableSeats}",
+              "${AppLocalizations.of(context)!.available_seats} ${event.availableSeats}",
               style: const TextStyle(fontSize: 16),
             ),
+
             const SizedBox(height: 20),
 
             // Buy Seat Button
@@ -83,7 +85,7 @@ class EventDetailScreen extends StatelessWidget {
                     // TODO: Navigate to seat selection screen
                   }
                 },
-                child: Text(event.availableSeats > 0 ? "Buy Seat" : "Sold Out"),
+                child: Text(event.availableSeats > 0 ? AppLocalizations.of(context)!.buy_seat : AppLocalizations.of(context)!.sold_out),
               ),
             ),
           ],

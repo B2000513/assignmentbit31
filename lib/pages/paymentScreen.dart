@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PaymentScreen extends StatelessWidget {
   final double totalPrice;
@@ -8,7 +9,7 @@ class PaymentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Checkout"), centerTitle: true),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.check_out), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -23,10 +24,13 @@ class PaymentScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Order Summary", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Divider(),
-                    Text("Total Amount: \$${totalPrice.toStringAsFixed(2)}",
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
+                    Text(AppLocalizations.of(context)!.order_summary,
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                      Divider(),
+                    Text("${AppLocalizations.of(context)!.total_amount}: \$${totalPrice.toStringAsFixed(2)}",
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green),
+                    ),
                   ],
                 ),
               ),
@@ -35,19 +39,19 @@ class PaymentScreen extends StatelessWidget {
             SizedBox(height: 30),
 
             // Payment Methods
-            Text("Select Payment Method", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(AppLocalizations.of(context)!.select_payment_method, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
 
-            _buildPaymentButton(context, Icons.payment, "Pay with PayPal", Colors.blue[800], _processPayPalPayment),
+            _buildPaymentButton(context, Icons.payment, AppLocalizations.of(context)!.pay_with_PayPal, Colors.blue[800], _processPayPalPayment),
             SizedBox(height: 10),
-            _buildPaymentButton(context, Icons.credit_card, "Pay with Credit Card", Colors.grey[700], _showCreditCardDialog),
+            _buildPaymentButton(context, Icons.credit_card, AppLocalizations.of(context)!.pay_with_credit_card, Colors.grey[700], _showCreditCardDialog),
 
             Spacer(),
 
             // Cancel Button
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Cancel", style: TextStyle(fontSize: 16, color: Colors.red)),
+              child: Text(AppLocalizations.of(context)!.cancel, style: TextStyle(fontSize: 16, color: Colors.red)),
             ),
           ],
         ),
@@ -78,7 +82,7 @@ class PaymentScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Payment Successful"),
+        title: Text(AppLocalizations.of(context)!.payment_successful),
         content: Text("Your payment of \$${totalPrice.toStringAsFixed(2)} has been processed via PayPal."),
         actions: [
           TextButton(
@@ -97,21 +101,22 @@ class PaymentScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Credit Card Payment"),
+        title: Text(AppLocalizations.of(context)!.credit_card_payment),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Enter your credit card details."),
+            Text(AppLocalizations.of(context)!.enter_your_credit_card_details),
             SizedBox(height: 10),
-            TextField(decoration: InputDecoration(labelText: "Card Number"), keyboardType: TextInputType.number),
-            TextField(decoration: InputDecoration(labelText: "Expiry Date"), keyboardType: TextInputType.datetime),
-            TextField(decoration: InputDecoration(labelText: "CVV"), keyboardType: TextInputType.number),
+            TextField(decoration: InputDecoration(labelText: AppLocalizations.of(context)!.card_number), keyboardType: TextInputType.number),
+            TextField(decoration: InputDecoration(labelText: AppLocalizations.of(context)!.expiry_date), keyboardType: TextInputType.datetime),
+            TextField(decoration: InputDecoration(labelText: AppLocalizations.of(context)!.cvv
+            ), keyboardType: TextInputType.number),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
-          ElevatedButton(onPressed: () => Navigator.pop(context), child: Text("Submit")),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancel)),
+          ElevatedButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.submit)),
         ],
       ),
     );

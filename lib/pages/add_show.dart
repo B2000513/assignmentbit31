@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/seats.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AddShowPage extends StatefulWidget {
   @override
@@ -33,7 +34,7 @@ class _AddShowPageState extends State<AddShowPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Add New Show")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.add_new_show)),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
         child: Column(
@@ -42,14 +43,14 @@ class _AddShowPageState extends State<AddShowPage> {
             // Show Name Input
             TextField(
               controller: nameController,
-              decoration: InputDecoration(labelText: "Show Name"),
+              decoration: InputDecoration(labelText:AppLocalizations.of(context)!.show_name),
             ),
             SizedBox(height: 10),
 
             // Introduction Input
             TextField(
               controller: introController,
-              decoration: InputDecoration(labelText: "Introduction"),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.introduction),
               maxLines: 3,
             ),
             SizedBox(height: 10),
@@ -57,7 +58,7 @@ class _AddShowPageState extends State<AddShowPage> {
             // Date Input
             TextField(
               controller: dateController,
-              decoration: InputDecoration(labelText: "Date"),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.date),
               onTap: () async {
                 DateTime? pickedDate = await showDatePicker(
                   context: context,
@@ -78,7 +79,7 @@ class _AddShowPageState extends State<AddShowPage> {
             // Time Input
             TextField(
               controller: timeController,
-              decoration: InputDecoration(labelText: "Time"),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.time),
               onTap: () async {
                 TimeOfDay? pickedTime = await showTimePicker(
                   context: context,
@@ -97,14 +98,14 @@ class _AddShowPageState extends State<AddShowPage> {
             // Location Input
             TextField(
               controller: locationController,
-              decoration: InputDecoration(labelText: "Location"),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.location),
             ),
             SizedBox(height: 10),
 
             // Row Input
             TextField(
               controller: rowController,
-              decoration: InputDecoration(labelText: "Number of Rows"),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.num_of_rows),
               keyboardType: TextInputType.number,
               onChanged: (value) => setState(() {}),
             ),
@@ -113,7 +114,7 @@ class _AddShowPageState extends State<AddShowPage> {
             // Column Input
             TextField(
               controller: colController,
-              decoration: InputDecoration(labelText: "Number of Columns"),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.num_of_columns),
               keyboardType: TextInputType.number,
               onChanged: (value) => setState(() {}),
             ),
@@ -121,9 +122,10 @@ class _AddShowPageState extends State<AddShowPage> {
 
             // Display Total Seats
             Text(
-              "Total Seats: ${_calculateTotalSeats()}",
+              "${AppLocalizations.of(context)!.total_seats} ${_calculateTotalSeats()}",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
+
             SizedBox(height: 10),
 
             // Poster Upload Button
@@ -132,10 +134,10 @@ class _AddShowPageState extends State<AddShowPage> {
                 children: [
                   _posterImage != null
                       ? Image.file(_posterImage!, height: 150)
-                      : Text("No poster selected"),
+                      : Text(AppLocalizations.of(context)!.no_poster_sel),
                   ElevatedButton(
                     onPressed: _pickImage,
-                    child: Text("Select Poster Image"),
+                    child: Text(AppLocalizations.of(context)!.select_poster_image),
                   ),
                 ],
               ),
@@ -148,7 +150,7 @@ class _AddShowPageState extends State<AddShowPage> {
                 onPressed: () {
                   _submitShow();
                 },
-                child: Text("Add Show"),
+                child: Text(AppLocalizations.of(context)!.add_show),
               ),
             ),
           ],
@@ -177,7 +179,7 @@ class _AddShowPageState extends State<AddShowPage> {
 
     if (showName.isEmpty || date.isEmpty || time.isEmpty || location.isEmpty || rows == 0 || cols == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please fill in all fields correctly")),
+        SnackBar(content: Text(AppLocalizations.of(context)!.please_fill_up)),
       );
       return;
     }
@@ -194,7 +196,7 @@ class _AddShowPageState extends State<AddShowPage> {
     print("Show Added: $showName, $date, $time, $location, Seats: $totalSeats");
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Show Added Successfully!")),
+      SnackBar(content: Text(AppLocalizations.of(context)!.show_added_suc)),
     );
 
     Navigator.pop(context);
