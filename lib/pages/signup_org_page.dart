@@ -30,7 +30,7 @@ class _SignUpOrgPageState extends State<SignUpOrgPage> {
     setState(() => isLoading = true);
 
     final response = await http.post(
-      Uri.parse("http://192.168.1.6//php/signup.php"),
+      Uri.parse("http://192.168.100.22//php/signup.php"),
       body: {
         "full_name": fullNameController.text,
         "email": emailController.text,

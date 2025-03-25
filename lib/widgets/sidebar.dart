@@ -72,7 +72,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
 
   /// Fetch user details from API
   Future<void> _fetchUserDetails(int userId) async {
-    final url = Uri.parse("http://192.168.1.6/event_management/api/get_user.php?user_id=$userId");
+    final url = Uri.parse("http://192.168.100.22/event_management/api/get_user.php?user_id=$userId");
 
     try {
       final response = await http.get(url);

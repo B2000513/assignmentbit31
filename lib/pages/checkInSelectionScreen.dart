@@ -23,7 +23,7 @@ class _CheckInSelectionScreenState extends State<CheckInSelectionScreen> {
   }
 
   Future<int> fetchUserTicketId(int userId, int eventId) async {
-    final url = Uri.parse("http://192.168.1.6/event_management/api/get_ticket_id.php?user_id=$userId&event_id=$eventId");
+    final url = Uri.parse("http://192.168.100.22/event_management/api/get_ticket_id.php?user_id=$userId&event_id=$eventId");
 
     try {
       final response = await http.get(url);
@@ -43,7 +43,7 @@ class _CheckInSelectionScreenState extends State<CheckInSelectionScreen> {
   }
 
   Future<List<Event>> fetchUserEvents(int userId) async {
-    final url = Uri.parse("http://192.168.1.6/event_management/api/get_user_event.php?user_id=$userId");
+    final url = Uri.parse("http://192.168.100.22/event_management/api/get_user_event.php?user_id=$userId");
 
     try {
       final response = await http.get(url);

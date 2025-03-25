@@ -148,7 +148,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.6/event_management/api/process_payment.php'),
+        Uri.parse('http://192.168.100.22/event_management/api/process_payment.php'),
         headers: {"Content-Type": "application/json"},
         body: requestBody,
       );
@@ -182,7 +182,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     try {
       final ticketResponse = await http.post(
-        Uri.parse('http://192.168.1.6/event_management/api/create_ticket.php'),
+        Uri.parse('http://192.168.100.22/event_management/api/create_ticket.php'),
         headers: {"Content-Type": "application/json"},
         body: ticketData,
       );

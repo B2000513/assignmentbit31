@@ -21,7 +21,7 @@ class _WaitlistPageState extends State<WaitlistPage> {
   }
 
   Future<void> fetchWaitlistData() async {
-    final response = await http.get(Uri.parse("http://192.168.1.6/event_management/api/get_waitlist.php"));
+    final response = await http.get(Uri.parse("http://192.168.100.22/event_management/api/get_waitlist.php"));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

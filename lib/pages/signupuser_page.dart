@@ -31,7 +31,7 @@ class _SignUpUserPageState extends State<SignUpUserPage> {
     });
 
     final response = await http.post(
-      Uri.parse("http://192.168.1.6/event_management/api/signup.php"), // Change to your API URL
+      Uri.parse("http://192.168.100.22/event_management/api/signup.php"), // Change to your API URL
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "name": nameController.text,

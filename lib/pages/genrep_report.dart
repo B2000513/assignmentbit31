@@ -9,7 +9,7 @@ class GenMainReport extends StatefulWidget {
 }
 
 class _GenMainReportState extends State<GenMainReport> {
-  final String apiUrl = "http://192.168.1.6/event_management/api/fetch_report.php";
+  final String apiUrl = "http://192.168.100.22/event_management/api/fetch_report.php";
 
   List<EventReport> reports = [];
   bool isLoading = true;

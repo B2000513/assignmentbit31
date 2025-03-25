@@ -24,7 +24,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   /// Fetch user details from API
   Future<void> _fetchUser() async {
-    final url = Uri.parse("http://192.168.1.6/event_management/api/get_user.php?user_id=${widget.userId}");
+    final url = Uri.parse("http://192.168.100.22/event_management/api/get_user.php?user_id=${widget.userId}");
 
     try {
       final response = await http.get(url);

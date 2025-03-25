@@ -43,7 +43,7 @@ class _BookingMainScreenState extends State<BookingMainScreen> {
 
 
   Future<List<Event>> fetchEvents() async {
-    final url = Uri.parse("http://192.168.1.6/event_management/api/get_event.php");
+    final url = Uri.parse("http://192.168.100.22/event_management/api/get_event.php");
     try {
       final response = await http.get(url);
       print("Response Code: ${response.statusCode}");

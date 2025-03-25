@@ -59,7 +59,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
   }
 
   Future<void> fetchUserDetails(int userId) async {
-    final url = Uri.parse("http://192.168.1.6/event_management/api/get_user.php?user_id=$userId");
+    final url = Uri.parse("http://192.168.100.22/event_management/api/get_user.php?user_id=$userId");
 
     try {
       final response = await http.get(url);
@@ -91,7 +91,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     if (userId == null) return;
 
     setState(() => isLoading = true);
-    final url = Uri.parse("http://192.168.1.6/event_management/api/edit_user.php");
+    final url = Uri.parse("http://192.168.100.22/event_management/api/edit_user.php");
 
     try {
       final response = await http.post(

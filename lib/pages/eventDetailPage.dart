@@ -25,7 +25,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Future<void> _fetchEventDetails() async {
-    final url = Uri.parse("http://192.168.1.6/event_management/api/get_event.php?id=${event.id}");
+    final url = Uri.parse("http://192.168.100.22/event_management/api/get_event.php?id=${event.id}");
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {

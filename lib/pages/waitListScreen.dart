@@ -28,7 +28,7 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
 
     setState(() => isSubmitting = true);
 
-    final url = Uri.parse("http://192.168.1.6/event_management/api/add_to_waitlist.php");
+    final url = Uri.parse("http://192.168.100.22/event_management/api/add_to_waitlist.php");
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},

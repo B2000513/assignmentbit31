@@ -25,7 +25,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
   /// Fetch ticket details from backend
   Future<void> fetchTicketDetails() async {
-    final url = Uri.parse("http://192.168.1.6/event_management/api/get_ticket.php?ticket_id=${widget.ticketId}");
+    final url = Uri.parse("http://192.168.100.22/event_management/api/get_ticket.php?ticket_id=${widget.ticketId}");
     print("Request URL: $url");
 
     try {

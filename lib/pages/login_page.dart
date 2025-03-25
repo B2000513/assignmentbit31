@@ -23,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
       errorMessage = null; // Reset error message
     });
 
-    final String apiUrl = "http://192.168.1.6/event_management/api/login.php"; // Replace with your actual API URL
+    final String apiUrl = "http://192.168.100.22/event_management/api/login.php"; // Replace with your actual API URL
     final response = await http.post(
       Uri.parse(apiUrl),
       headers: {"Content-Type": "application/json"},

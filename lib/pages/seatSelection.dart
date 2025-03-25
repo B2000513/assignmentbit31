@@ -33,7 +33,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   Future<void> fetchSeats() async {
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.1.6/event_management/api/get_seat.php?event_id=${widget.event.id}'),
+        Uri.parse('http://192.168.100.22/event_management/api/get_seat.php?event_id=${widget.event.id}'),
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -103,7 +103,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
     List<int> selectedSeatIds = selectedSeats.map((seat) => seat["id"] as int).toList();
 
-    final url = Uri.parse('http://192.168.1.6/event_management/api/reserve_seat.php');
+    final url = Uri.parse('http://192.168.100.22/event_management/api/reserve_seat.php');
 
     try {
       final response = await http.post(

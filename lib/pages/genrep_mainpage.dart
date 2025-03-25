@@ -112,7 +112,7 @@ class _GenRepMainPageState extends State<GenRepMainPage> {
       isLoading = true;
     });
 
-    String apiUrl = "http://192.168.1.6/event_management/api/fetch_report.php";
+    String apiUrl = "http://192.168.100.22/event_management/api/fetch_report.php";
     Map<String, String> params = {
       "reportType": selectedReportType,
       "timeframe": selectedTimeframe,

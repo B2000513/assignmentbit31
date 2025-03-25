@@ -70,7 +70,7 @@ class _AddShowPageState extends State<AddShowPage> {
 
     try {
       var response = await http.post(
-        Uri.parse("http://192.168.1.6/event_management/api/add_event.php"),
+        Uri.parse("http://192.168.100.22/event_management/api/add_event.php"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(eventData),
       );
