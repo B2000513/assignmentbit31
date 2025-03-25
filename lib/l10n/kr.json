@@ -1,0 +1,26 @@
+{
+  "welcome": "HELP EMS 앱에 오신 것을 환영합니다",
+  "bookShow": "공연 예약",
+  "adminProfile": "관리자 프로필",
+  "addNewShow": "새로운 공연 추가",
+  "profile": "프로필",
+  "payment": "결제",
+  "settings": "설정",
+  "ticket": "티켓",
+  "waitlist": "대기 목록",
+  "logout": "로그아웃",
+  "add_new_show": "새로운 쇼 추가",
+  "show_name": "쇼 이름",
+  "introduction": "소개",
+  "date": "날짜",
+  "time": "시간",
+  "location": "위치",
+  "num_rows": "행 수",
+  "num_cols": "열 수",
+  "total_seats": "총 좌석 수",
+  "select_poster": "포스터 이미지 선택",
+  "add_show": "쇼 추가",
+  "success_message": "쇼가 성공적으로 추가되었습니다!",
+  "error_message": "모든 필드를 올바르게 입력하세요."
+
+}

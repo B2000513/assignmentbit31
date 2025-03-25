@@ -4,6 +4,8 @@ import '../pages/genrep_report.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class GenRepMainPage extends StatefulWidget {
+  const GenRepMainPage({super.key});
+
   @override
   _GenerateReportMainPageState createState() => _GenerateReportMainPageState();
 }
