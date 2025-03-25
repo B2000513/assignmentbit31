@@ -1,24 +1,64 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class WaitlistScreen extends StatefulWidget {
-  final String eventTitle; // Accept event title to display in the waitlist screen
+  final int eventId; // Event ID passed to the screen
 
-  const WaitlistScreen ({super.key, required this.eventTitle});
+  const WaitlistScreen({super.key, required this.eventId});  // Ensure eventId is required here
 
   @override
-  State<WaitlistScreen> createState() => _WaitlistScreenState();
+  _WaitlistScreenState createState() => _WaitlistScreenState();
 }
 
 class _WaitlistScreenState extends State<WaitlistScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  bool isSubmitting = false;
   bool isSubmitted = false;
+
+  Future<void> _joinWaitlist() async {
+    if (_nameController.text.isEmpty || _emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Please enter your name and email."),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    setState(() => isSubmitting = true);
+
+    final url = Uri.parse("http://192.168.100.22/event_management/api/add_to_waitlist.php");
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: json.encode({
+        "name": _nameController.text,
+        "email": _emailController.text,
+        "event_id": widget.eventId, // Pass event_id here
+      }),
+    );
+
+    final data = json.decode(response.body);
+
+    if (data["success"]) {
+      setState(() {
+        isSubmitted = true;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Error: ${data['message']}"),
+        backgroundColor: Colors.red,
+      ));
+    }
+
+    setState(() => isSubmitting = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.eventTitle)),
+      appBar: AppBar(title: const Text("Join Waitlist")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: isSubmitted
@@ -27,41 +67,44 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
           children: [
             const Icon(Icons.check_circle, color: Colors.green, size: 80),
             const SizedBox(height: 20),
-            Text(AppLocalizations.of(context)!.you_been_added_to_the_waitlist, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              "You've been added to the waitlist!",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
-            Text(AppLocalizations.of(context)!.we_notify_you_if_tickets_become_available),
+            const Text("We'll notify you if tickets become available."),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              child:  Text(AppLocalizations.of(context)!.back_to_events),
+              child: const Text("Back to Events"),
             ),
           ],
         )
             : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             Text(AppLocalizations.of(context)!.event_sold_out_mes,
-                style: TextStyle(fontSize: 16)),
+            const Text(
+              "This event is sold out. Join the waitlist to be notified if tickets become available.",
+              style: TextStyle(fontSize: 16),
+            ),
             const SizedBox(height: 20),
             TextField(
               controller: _nameController,
-              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.name),
+              decoration: const InputDecoration(labelText: "Name"),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.email),
+              decoration: const InputDecoration(labelText: "Email"),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    isSubmitted = true;
-                  });
-                },
-                child: Text(AppLocalizations.of(context)!.join_waitlist),
+                onPressed: isSubmitting ? null : _joinWaitlist,
+                child: isSubmitting
+                    ? const CircularProgressIndicator()
+                    : const Text("Join Waitlist"),
               ),
             ),
           ],

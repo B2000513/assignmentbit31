@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:assignmentbit31/models/events.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'paymentScreen.dart';
-import '../models/seats.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/events.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
   final Event event;
-
   const SeatSelectionScreen({super.key, required this.event});
 
   @override
@@ -15,95 +14,124 @@ class SeatSelectionScreen extends StatefulWidget {
 }
 
 class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
-  late List<List<Seat>> seats;
-  double seatPrice = 20.0;
+  List<List<Map<String, dynamic>>> seats = [];
+  List<Map<String, dynamic>> selectedSeats = [];
   double totalPrice = 0.0;
-  TextEditingController promoController = TextEditingController();
-  double discount = 0.0;
-  bool isValidPromo = false;
-  List<String> selectedSeats = [];
-
+  late Future<void> seatDataFuture;
 
   @override
   void initState() {
     super.initState();
-    seats = List.generate(6, (row) => List.generate(3, (col) {
-      return Seat(
-        row: row,
-        col: col,
-        isOccupied: widget.event.seats[row][col].isOccupied,
+    seatDataFuture = fetchSeats();
+  }
+
+  Future<int?> getUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('user_id');
+  }
+
+  Future<void> fetchSeats() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://192.168.100.22/event_management/api/get_seat.php?event_id=${widget.event.id}'),
       );
-    }));
-  }
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (!data["success"]) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(data["message"])));
+          }
+          return;
+        }
+        Map<int, List<Map<String, dynamic>>> seatMap = {};
+        for (var seat in data["seats"]) {
+          int row = seat["row_number"];
+          int col = seat["col_number"];
+          int seatId = seat["id"];
+          String status = seat["status"] ?? "available";
+          double price = double.tryParse(seat["price"].toString()) ?? 0.0;
 
-  String getSeatLabel(int row, int col) {
-    String rowLetter = String.fromCharCode(65 + row); // Converts 0 -> 'A', 1 -> 'B'
-    return "$rowLetter${col + 1}"; // A1, A2, B1, etc.
-  }
-
-  void toggleSeat(int row, int col) {
-    if (seats[row][col].isOccupied) return;
-
-    setState(() {
-      String seatLabel = getSeatLabel(row, col);
-      if (selectedSeats.contains(seatLabel)) {
-        selectedSeats.remove(seatLabel);
-      } else {
-        selectedSeats.add(seatLabel);
+          seatMap[row] ??= [];
+          seatMap[row]?.add({
+            "id": seatId,
+            "col": col,
+            "status": status,
+            "price": price,
+            "seatLabel": "${String.fromCharCode(65 + row - 1)}$col",
+          });
+        }
+        if (mounted) {
+          setState(() {
+            seats = List.generate(seatMap.length, (i) => seatMap[i + 1] ?? []);
+          });
+        }
       }
-      calculateTotal();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      }
+    }
+  }
+
+  void toggleSeat(Map<String, dynamic> seat) {
+    setState(() {
+      if (selectedSeats.any((s) => s["id"] == seat["id"])) {
+        selectedSeats.removeWhere((s) => s["id"] == seat["id"]);
+        totalPrice -= seat["price"];
+      } else {
+        selectedSeats.add(seat);
+        totalPrice += seat["price"];
+      }
     });
   }
 
-  void calculateTotal() {
-    totalPrice = selectedSeats.length * seatPrice * (1 - discount);
-  }
-
-  void applyPromoCode() {
-    String code = promoController.text.trim().toUpperCase();
-    setState(() {
-      if (code == "DISCOUNT10") {
-        discount = 0.10;
-        isValidPromo = true;
-      } else if (code == "DISCOUNT20") {
-        discount = 0.20;
-        isValidPromo = true;
-      } else {
-        discount = 0.0;
-        isValidPromo = false;
-      }
-      calculateTotal();
-    });
-  }
-
-  void proceedToPayment() async {
+  Future<void> reserveSeats() async {
     if (selectedSeats.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(AppLocalizations.of(context)!.please_select_one_seat)),
+        const SnackBar(content: Text("Please select at least one seat!")),
       );
       return;
     }
 
-    final paymentSuccess = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentScreen(totalPrice: totalPrice),
-      ),
-    );
-
-    if (paymentSuccess == true) {
-      // ✅ **Only after payment, mark seats as occupied**
-      setState(() {
-        for (var seatLabel in selectedSeats) {
-          int row = seatLabel.codeUnitAt(0) - 65; // Convert 'A' -> 0, 'B' -> 1
-          int col = int.parse(seatLabel.substring(1)) - 1; // Convert '1' -> 0
-          seats[row][col].isOccupied = true;
-        }
-        selectedSeats.clear(); // Clear selection after booking
-      });
-
+    int? userId = await getUserId();
+    if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.seat_suc_booked)),
+        const SnackBar(content: Text("User not found. Please log in again.")),
+      );
+      return;
+    }
+
+    List<int> selectedSeatIds = selectedSeats.map((seat) => seat["id"] as int).toList();
+
+    final url = Uri.parse('http://192.168.100.22/event_management/api/reserve_seat.php');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "user_id": userId,
+          "event_id": widget.event.id,
+          "seat_ids": selectedSeatIds,
+        }),
+      );
+
+      final result = json.decode(response.body);
+      if (response.statusCode == 200 && result["success"] == true) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentScreen(seatItems: selectedSeats, eventId: widget.event.id,),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Reservation failed: ${result["message"]}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error reserving seats: $e")),
       );
     }
   }
@@ -111,168 +139,60 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("${AppLocalizations.of(context)!.select_seats} - ${widget.event.title}"),
-      ),
-
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              AppLocalizations.of(context)!.select_your_seats,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-
-
-            Expanded(
-              child: SingleChildScrollView(
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 6 * 3,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 1.1,
-                  ),
-                  itemBuilder: (context, index) {
-                    int row = index ~/ 3;
-                    int col = index % 3;
-                    bool isOccupied = seats[row][col].isOccupied;
-                    String seatLabel = getSeatLabel(row, col);
-
-                    return GestureDetector(
-                      onTap: () => toggleSeat(row, col),
-                      child: Container(
-                        margin: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: isOccupied
-                              ? Colors.red
-                              : (selectedSeats.contains(seatLabel) ? Colors.orange : Colors.green[400]),
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(2, 2),
-                            )
-                          ],
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                isOccupied
-                                    ? Icons.close
-                                    : (selectedSeats.contains(seatLabel) ? Icons.check_circle : Icons.check),
-                                color: Colors.white,
-                              ),
-                              Text(
-                                seatLabel,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+      appBar: AppBar(title: Text("Select Seats - ${widget.event.title}")),
+      body: FutureBuilder<void>(
+        future: seatDataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Expanded(
+                  child: GridView.builder(
+                    itemCount: seats.fold(0, (sum, row) => sum! + row.length),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 8,
+                      childAspectRatio: 1.2,
+                    ),
+                    itemBuilder: (context, index) {
+                      int row = index ~/ 8;
+                      int colIndex = index % 8;
+                      if (row >= seats.length || colIndex >= seats[row].length) {
+                        return const SizedBox();
+                      }
+                      var seat = seats[row][colIndex];
+                      bool isSelected = selectedSeats.any((s) => s["id"] == seat["id"]);
+                      return GestureDetector(
+                        onTap: (seat["status"] == "booked" || seat["status"] == "reserved")
+                            ? null
+                            : () => toggleSeat(seat),
+                        child: Container(
+                          margin: const EdgeInsets.all(6),
+                          child: Icon(
+                            Icons.event_seat,
+                            size: 30,
+                            color: seat["status"] == "booked"
+                                ? Colors.red
+                                : seat["status"] == "reserved"
+                                ? Colors.yellow
+                                : (isSelected ? Colors.orange : Colors.green[400]),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            if (selectedSeats.isNotEmpty)
-              Column(
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.selected_seats,
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-
-                  Text(
-                    selectedSeats.join(", "),
-                    style: const TextStyle(fontSize: 16, color: Colors.blue),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-              ),
-
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(2, 2),
-                  )
-                ],
-              ),
-              child: TextField(
-                controller: promoController,
-                decoration: InputDecoration(
-                  hintText:
-                    AppLocalizations.of(context)!.enter_promo_code,
-                  border: InputBorder.none,
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.check, color: Colors.blue),
-                    onPressed: applyPromoCode,
+                      );
+                    },
                   ),
                 ),
-              ),
+                ElevatedButton(
+                  onPressed: reserveSeats,
+                  child: const Text("Proceed to Payment"),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 10),
-
-            if (isValidPromo)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${AppLocalizations.of(context)!.promo_applied} ${discount * 100}% off!",
-                    style: const TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-              ),
-
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-    child: Text(
-    "${AppLocalizations.of(context)!.total_price} \$${totalPrice.toStringAsFixed(2)}",
-    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-    ),
-    ),
-            const SizedBox(height: 15),
-
-            ElevatedButton(
-              onPressed: proceedToPayment,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
-                backgroundColor: Colors.blue,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: Text(AppLocalizations.of(context)!.proceed_to_payemnt,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-            ),
-            const SizedBox(height: 15),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

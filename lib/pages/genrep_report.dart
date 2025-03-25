@@ -1,253 +1,174 @@
-import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
-import 'package:open_file/open_file.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:http/http.dart' as http;
 
-class GenRepReportPage extends StatelessWidget {
-  final String reportType;
-  final String timeframe;
-  final DateTime? startDate;
-  final DateTime? endDate;
-  final DateTime? selectedMonth;
-  final List<String> showNames;
-  final List<int> ticketSales;
-  final List<int> revenue;
+class GenMainReport extends StatefulWidget {
+  @override
+  _GenMainReportState createState() => _GenMainReportState();
+}
 
-  // ✅ Define as class fields
-  late final int totalTicketSales;
-  late final int totalRevenue;
-  final int maxSeatOccupancy = 500;
-  late final double seatOccupancyPercentage;
+class _GenMainReportState extends State<GenMainReport> {
+  final String apiUrl = "http://192.168.100.22/event_management/api/fetch_report.php";
 
-  GenRepReportPage({super.key, 
-    required this.reportType,
-    required this.timeframe,
-    this.startDate,
-    this.endDate,
-    this.selectedMonth,
-    required this.showNames,
-    required this.ticketSales,
-    required this.revenue,
-  }) {
-    // ✅ Initialize these values in the constructor
-    totalTicketSales = ticketSales.reduce((a, b) => a + b);
-    totalRevenue = revenue.reduce((a, b) => a + b);
-    seatOccupancyPercentage = (totalTicketSales / maxSeatOccupancy).clamp(0, 1);
+  List<EventReport> reports = [];
+  bool isLoading = true;
+  String errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchReportData();
+  }
+
+  Future<void> fetchReportData() async {
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          reports = data.map((e) => EventReport.fromJson(e)).toList();
+          isLoading = false;
+        });
+      } else {
+        throw Exception("Failed to load data");
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        errorMessage = "Error loading report: $e";
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    double maxY = ([...ticketSales, ...revenue].reduce((a, b) => a > b ? a : b)) * 1.2;
-
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.gened_rep)),
+      appBar: AppBar(title: const Text("Event Reports")),
       body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : errorMessage.isNotEmpty
+            ? Center(child: Text(errorMessage, style: const TextStyle(color: Colors.red)))
+            : ListView(
+          children: [
+            _buildChartSection("Ticket Sales", _buildBarChart(reports.map((e) => e.ticketSales).toList(), Colors.blue)),
+            _buildChartSection("Revenue", _buildBarChart(reports.map((e) => e.revenue.toInt()).toList(), Colors.green)),
+            ...reports.map((e) => _buildChartSection(e.eventName, _buildPieChart(e))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartSection(String title, Widget chart) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "${AppLocalizations.of(context)!.rep_type} $reportType",
-              style: TextStyle(fontSize: 18),
-            ),
-
-            if (timeframe == 'Daily' || timeframe == 'Weekly')
-              Text('Date Range: ${startDate?.toLocal()} - ${endDate?.toLocal()}', style: TextStyle(fontSize: 16)),
-            if (timeframe == 'Monthly')
-              Text('Selected Month: ${selectedMonth?.toLocal()}', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 20),
-            Expanded(
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: maxY,
-                  barGroups: List.generate(
-                    showNames.length,
-                        (index) => BarChartGroupData(
-                      x: index,
-                      barRods: [
-                        BarChartRodData(
-                          toY: ticketSales[index].toDouble(),
-                          color: Colors.blue,
-                          width: 15,
-                        ),
-                        BarChartRodData(
-                          toY: revenue[index].toDouble(),
-                          color: Colors.green,
-                          width: 15,
-                        ),
-                      ],
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 40,
-                        getTitlesWidget: (value, meta) => Text(value.toInt().toString()),
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          int index = value.toInt();
-                          if (index >= 0 && index < showNames.length) {
-                            return Transform.rotate(
-                              angle: -0.5,
-                              child: Text(
-                                showNames[index],
-                                style: TextStyle(fontSize: 10),
-                              ),
-                            );
-                          }
-                          return Text('');
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: true),
-                  gridData: FlGridData(show: true),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Indicator(color: Colors.blue, text: AppLocalizations.of(context)!.ticket_sales),
-                SizedBox(width: 20),
-                Indicator(color: Colors.green, text: AppLocalizations.of(context)!.revenue),
-              ],
-            ),
-            SizedBox(height: 30),
-            Text(AppLocalizations.of(context)!.rev_breakdown, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Text(
-              "${AppLocalizations.of(context)!.total_tic_sales} $totalTicketSales",
-              style: TextStyle(fontSize: 16),
-            ),
-            Text(
-              "${AppLocalizations.of(context)!.total_rev} \$${totalRevenue.toStringAsFixed(2)}",
-              style: TextStyle(fontSize: 16),
-            ),
-            SizedBox(height: 10),
-
-            Text(
-              "${AppLocalizations.of(context)!.total_seat_occ} $totalTicketSales / $maxSeatOccupancy seats",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-
-            SizedBox(height: 5),
-            Text("${AppLocalizations.of(context)!.occ_rate} ${(seatOccupancyPercentage * 100).toStringAsFixed(1)}%", style: TextStyle(fontSize: 16)),
-            SizedBox(height: 5),
-            LinearProgressIndicator(
-              value: seatOccupancyPercentage,
-              backgroundColor: Colors.grey[300],
-              color: Colors.orange,
-              minHeight: 10,
-            ),
-            SizedBox(height: 20),
-
-            // PDF Report Button
-            Center(
-              child: ElevatedButton(
-                onPressed: () => _generatePDFReport(context),
-                child: Text(AppLocalizations.of(context)!.gen_pdf_report),
-              ),
-            ),
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 10),
+            SizedBox(height: 300, child: chart),
           ],
         ),
       ),
     );
   }
 
-  Future<void> _generatePDFReport(BuildContext context) async {
-    final pdf = pw.Document();
+  Widget _buildBarChart(List<int> data, Color color) {
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: (data.isNotEmpty ? data.reduce((a, b) => a > b ? a : b) : 1) * 1.2,
+        barGroups: List.generate(
+          reports.length,
+              (index) => BarChartGroupData(
+            x: index,
+            barRods: [
+              BarChartRodData(toY: data[index].toDouble(), color: color, width: 20, borderRadius: BorderRadius.circular(6)),
+            ],
+          ),
+        ),
+        titlesData: _getTitlesData(),
+        borderData: FlBorderData(show: false),
+      ),
+    );
+  }
 
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text('Generated Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 10),
-            pw.Text('Report Type: $reportType', style: pw.TextStyle(fontSize: 18)),
-            if (timeframe == 'Daily' || timeframe == 'Weekly')
-              pw.Text('Date Range: ${startDate?.toLocal()} - ${endDate?.toLocal()}'),
-            if (timeframe == 'Monthly') pw.Text('Selected Month: ${selectedMonth?.toLocal()}'),
-            pw.SizedBox(height: 10),
-            pw.Text("Total Ticket Sales: $totalTicketSales", style: pw.TextStyle(fontSize: 16)),
-            pw.Text("Total Revenue: \$${totalRevenue.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 16)),
-            pw.SizedBox(height: 10),
-            pw.Text("Total Seat Occupancy: $totalTicketSales / $maxSeatOccupancy seats"),
-            pw.Text("Occupancy Rate: ${(seatOccupancyPercentage * 100).toStringAsFixed(1)}%"),
-            pw.SizedBox(height: 10),
-            pw.Divider(),
-            pw.Text("Show Breakdown", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 5),
-            pw.Column(
-              children: List.generate(
-                showNames.length,
-                    (index) => pw.Text("${showNames[index]} - Sales: ${ticketSales[index]}, Revenue: \$${revenue[index]}"),
-              ),
-            ),
-          ],
+  Widget _buildPieChart(EventReport report) {
+    int booked = report.bookedSeats;
+    int available = report.totalSeats - booked;
+    return PieChart(
+      PieChartData(
+        sections: [
+          PieChartSectionData(
+            value: booked.toDouble(),
+            title: "$booked Booked",
+            color: Colors.blue,
+            radius: 80,
+            titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          PieChartSectionData(
+            value: available.toDouble(),
+            title: "$available Available",
+            color: Colors.green,
+            radius: 80,
+            titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ],
+        sectionsSpace: 2,
+        centerSpaceRadius: 40,
+      ),
+    );
+  }
+
+  FlTitlesData _getTitlesData() {
+    return FlTitlesData(
+      leftTitles: AxisTitles(
+        sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+      ),
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          getTitlesWidget: (value, meta) {
+            int index = value.toInt();
+            return index >= 0 && index < reports.length
+                ? Transform.rotate(angle: -0.5, child: Text(reports[index].eventName, style: TextStyle(fontSize: 10)))
+                : const Text('');
+          },
         ),
       ),
     );
-
-    try {
-      // ✅ Save the PDF file
-      File savedFile = await _savePdf(pdf);
-
-      // ✅ Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${AppLocalizations.of(context)!.pdf_saved_at} ${savedFile.path}")),
-      );
-
-      // ✅ Open the saved PDF file
-      Future.delayed(Duration(seconds: 1), () {
-        OpenFile.open(savedFile.path);
-      });
-    } catch (e) {
-      // Handle errors if opening fails
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to open PDF: $e")),
-      );
-    }
   }
-
-
-
-  Future<File> _savePdf(pw.Document pdf) async {
-    final directory = await getExternalStorageDirectory(); // ✅ Get external storage
-    final path = "${directory?.path}/generated_report.pdf";
-    final file = File(path);
-    await file.writeAsBytes(await pdf.save());
-    return file;
-  }
-
 }
 
+class EventReport {
+  final String eventName;
+  final int ticketSales;
+  final double revenue;
+  final int bookedSeats;
+  final int totalSeats;
 
-class Indicator extends StatelessWidget {
-  final Color color;
-  final String text;
+  EventReport({
+    required this.eventName,
+    required this.ticketSales,
+    required this.revenue,
+    required this.bookedSeats,
+    required this.totalSeats,
+  });
 
-  const Indicator({super.key, required this.color, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(width: 12, height: 12, color: color),
-        SizedBox(width: 5),
-        Text(text, style: TextStyle(fontSize: 14)),
-      ],
+  factory EventReport.fromJson(Map<String, dynamic> json) {
+    return EventReport(
+      eventName: json['event_name'].toString(),
+      ticketSales: int.tryParse(json['ticket_sales'].toString()) ?? 0,
+      revenue: double.tryParse(json['revenue'].toString()) ?? 0.0,
+      bookedSeats: int.tryParse(json['booked_seats'].toString()) ?? 0,
+      totalSeats: int.tryParse(json['total_seats'].toString()) ?? 0,
     );
   }
 }

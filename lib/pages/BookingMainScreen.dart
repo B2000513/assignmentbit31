@@ -1,221 +1,190 @@
-import 'package:assignmentbit31/pages/waitlist_page.dart';
 import 'package:flutter/material.dart';
-import '../models/events.dart'; // Import Event model
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/events.dart';
 import '../pages/eventDetailPage.dart';
 import 'seatSelection.dart';
-import 'waitListScreen.dart'; // Import Waitlist Screen
+import '../pages/waitListScreen.dart';
 import 'CheckInSelectionScreen.dart';
-import '../pages/user_profile_page.dart'; // Import UserProfilePage
-import '../pages/login_page.dart'; // Import LoginPage
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../pages/user_profile_page.dart';
+import '../pages/login_page.dart';
+import '../widgets/sidebar.dart';
+
+class BookingMainScreen extends StatefulWidget {
+  const BookingMainScreen({super.key});
+
+  @override
+  _BookingMainScreenState createState() => _BookingMainScreenState();
+}
 
 
 
-class BookingMainScreen extends StatelessWidget {
+class _BookingMainScreenState extends State<BookingMainScreen> {
+  late Future<List<Event>> eventsFuture;
 
-  final Function(Locale) setLocale; // ✅ Accept setLocale
 
-  const BookingMainScreen({Key? key, required this.setLocale}) : super(key: key); // ✅ Require setLocale
 
+  @override
+  void initState() {
+    super.initState();
+    eventsFuture = fetchEvents();
+  }
+
+
+
+  Future<int?> _getUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getInt("user_id");
+  }
+
+
+
+
+
+  Future<List<Event>> fetchEvents() async {
+    final url = Uri.parse("http://192.168.100.22/event_management/api/get_event.php");
+    try {
+      final response = await http.get(url);
+      print("Response Code: ${response.statusCode}");
+      print("Response Body: ${response.body}");
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        return data.map((event) => Event(
+          id: event['id'],
+          title: event['title'],
+          image: event['poster_image'] ?? "https://via.placeholder.com/400",
+          description: event['description'],
+          venue: event['venue'],
+          time: "${event['event_date']} at ${event['event_time']}",
+          availableSeats: int.tryParse(event['available_seats'].toString()) ?? 0,
+        )).toList();
+      } else {
+        throw Exception("Failed to load events");
+      }
+    } catch (e) {
+      print("Error: $e");
+      throw Exception("Error: $e");
+    }
+  }
+
+  Future<void> _refreshEvents() async {
+    setState(() {
+      eventsFuture = fetchEvents();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.book_your_event)),
-      drawer: _buildSidebar(context), //   Sidebar (Drawer)
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView.builder(
-          itemCount: eventList.length,
-          itemBuilder: (context, index) {
-            final event = eventList[index];
-
-            return GestureDetector(
-              onTap: () {
-                //   Navigate to Event Detail Page
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EventDetailScreen(event: event),
-                  ),
-                );
-              },
-              child: Card(
-                elevation: 4,
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    //   Event Image
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                      child: Image.asset(
-
-                        'assets/concert.jpg',
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(20),
-                              child: Text(
-                                AppLocalizations.of(context)!.image_not_ava,
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-
-                    //  Event Details & Booking Button
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
+      appBar: AppBar(title: const Text("Book Your Event")),
+      drawer: const SidebarWidget(),
+      body: RefreshIndicator(
+        onRefresh: _refreshEvents,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: FutureBuilder<List<Event>>(
+            future: eventsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text("Error loading events"));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text("No events available"));
+              }
+              final events = snapshot.data!;
+              return ListView.builder(
+                itemCount: events.length,
+                itemBuilder: (context, index) {
+                  final event = events[index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EventDetailScreen(event: event),
+                        ),
+                      );
+                    },
+                    child: Card(
+                      elevation: 4,
+                      margin: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            event.title,
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-
-                          Text(
-                            "${AppLocalizations.of(context)!.available_seats}: ${event.availableSeats}",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: event.availableSeats > 0 ? Colors.green : Colors.red,
-                            ),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          if (event.availableSeats > 0)
-                            ElevatedButton(
-                              onPressed: () {
-                                // Navigate to Seat Selection Screen
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => SeatSelectionScreen(event: event),
+                          ClipRRect(
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                            child: Image.network(
+                              event.image,
+                              height: 180,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(20),
+                                    child: Text("Image not available", style: TextStyle(color: Colors.red)),
                                   ),
                                 );
                               },
-                              child: Text(AppLocalizations.of(context)!.book_now),
-                            )
-                          else
-                            ElevatedButton(
-                              onPressed: () {
-                                // Navigate to Waitlist Screen
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => WaitlistScreen(eventTitle: event.title),
-                                  ),
-                                );
-                              },
-                              child: Text(AppLocalizations.of(context)!.join_waitlist),
                             ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  event.title,
+                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  "Available Seats: ${event.availableSeats}",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: event.availableSeats > 0 ? Colors.green : Colors.red,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                if (event.availableSeats > 0)
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => SeatSelectionScreen(event: event),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text("Book Now"),
+                                  )
+                                else
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => WaitlistScreen(eventId: event.id), // Pass event.id here
+                                        ),
+                                      );
+                                    },
+                                    child: const Text("Join Waitlist"),
+                                  ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            );
-          },
+                  );
+                },
+              );
+            },
+          ),
         ),
-      ),
-    );
-  }
-
-  //   Sidebar (Drawer) Widget
-  Widget _buildSidebar(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children:  [
-                Icon(Icons.event, color: Colors.white, size: 50),
-                SizedBox(height: 10),
-                Text(AppLocalizations.of(context)!.event_booking, style: TextStyle(color: Colors.white, fontSize: 20)),
-              ],
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.person),
-            title:  Text(AppLocalizations.of(context)!.profile),
-            onTap: () {
-              Navigator.pop(context); // Close drawer
-              // TODO: Navigate to Profile Page
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => UserProfilePage()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.payment),
-            title: Text(AppLocalizations.of(context)!.payment),
-            onTap: () {
-              Navigator.pop(context);
-              // TODO: Navigate to Payment Page
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: Text(AppLocalizations.of(context)!.settings),
-            onTap: () {
-              Navigator.pop(context);
-              // TODO: Navigate to Settings Page
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.list_alt),
-            title:  Text(AppLocalizations.of(context)!.ticket),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CheckInSelectionScreen(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.hourglass_bottom),
-            title: Text(AppLocalizations.of(context)!.waitlist),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => WaitlistPage(),
-                ),
-              );
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: Text(AppLocalizations.of(context)!.logout),
-            onTap: () {
-              Navigator.pop(context);
-              // TODO: Handle logout
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => LoginPage(setLocale: setLocale)),
-              );
-            },
-          ),
-        ],
       ),
     );
   }
