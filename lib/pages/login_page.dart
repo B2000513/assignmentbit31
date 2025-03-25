@@ -55,7 +55,7 @@ class _LoginPageState extends State<LoginPage> {
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => HomeScreen()),
+            MaterialPageRoute(builder: (context) => HomeScreen(setLocale: (Locale ) {  },)),
           );
         }
       } else {

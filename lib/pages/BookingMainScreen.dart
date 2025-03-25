@@ -12,7 +12,7 @@ import '../pages/login_page.dart';
 import '../widgets/sidebar.dart';
 
 class BookingMainScreen extends StatefulWidget {
-  const BookingMainScreen({super.key});
+  const BookingMainScreen({super.key, required Function(Locale p1) setLocale});
 
   @override
   _BookingMainScreenState createState() => _BookingMainScreenState();

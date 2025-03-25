@@ -6,7 +6,7 @@ import 'signup_org_page.dart';
 import 'genrep_mainpage.dart';
 
 class AdminProfilePage extends StatefulWidget {
-  const AdminProfilePage({super.key});
+  const AdminProfilePage({super.key, required Function(Locale p1) setLocale});
 
   @override
   _AdminProfilePageState createState() => _AdminProfilePageState();
